@@ -1,7 +1,8 @@
+import itertools
 import typing
 from collections import Counter
 
-from constants import Good, Card
+from constants import Good, Card, Roll
 from lib.utils import ImmutableInvertibleMapping, ImmutableMapping
 
 good_codes: typing.Mapping[str, Good] = ImmutableInvertibleMapping({g.name[0]: g for g in Good})
@@ -34,8 +35,36 @@ def load_good_counter(s: str) -> typing.Counter[Good]:
     return result
 
 
+def tokens(s: str) -> typing.List[str]:
+    result = [[s[0]]]
+    last = s[0]
+    for c in itertools.islice(s, 1, len(s)):
+        if c.isupper() or (c.isdigit() and not last.isdigit()):
+            result.append([c])
+        else:
+            result[-1].append(c)
+        last = c
+
+    return [''.join(cs).upper() for cs in result]
+
+
+def tokens_match(ts: typing.Iterable[str], canonical: typing.Iterable[str]) -> bool:
+    if not ts:
+        return True
+    iter_ts = iter(ts)
+    current = next(iter_ts)
+    for token in canonical:
+        if token.startswith(current):
+            try:
+                current = next(iter_ts)
+            except StopIteration:
+                return True
+    return False
+
+
 card_codes: typing.Mapping[str, Card] = ImmutableMapping({
     'OneGood': Card.ONE_GOOD,
+    '1Good': Card.ONE_GOOD,
     '5Lira': Card.FIVE_LIRA,
     'FiveLira': Card.FIVE_LIRA,
     'ExtraMove': Card.EXTRA_MOVE,
@@ -54,3 +83,22 @@ card_codes: typing.Mapping[str, Card] = ImmutableMapping({
     '2xGemstoneDealer': Card.DOUBLE_DEALER,
     'DoubleGemstoneDealer': Card.DOUBLE_DEALER,
 })
+
+card_tokens: typing.Mapping[typing.Tuple[str], Card] = {tuple(tokens(k)): v for k, v in card_codes.items()}
+
+
+def load_card(s: str) -> typing.Set[Card]:
+    ts = tokens(s)
+    result: typing.Set[Card] = set()
+    for card_tts, card in card_tokens.items():
+        if card in result:
+            continue
+        if tokens_match(ts, card_tts):
+            result.add(card)
+
+    return result
+
+
+def load_roll(s: str) -> Roll:
+    first, second = s.split('+')
+    return int(first), int(second)
