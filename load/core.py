@@ -99,6 +99,13 @@ def load_card(s: str) -> typing.Set[Card]:
     return result
 
 
+def load_exact_card(s: str) -> Card:
+    cards = load_card(s)
+    assert cards, f'"{s}" did not match any card'
+    assert len(cards) == 1, f'Ambiguous card spec "{s}"'
+    return cards.pop()
+
+
 def load_roll(s: str) -> Roll:
     first, second = s.split('+')
     return int(first), int(second)

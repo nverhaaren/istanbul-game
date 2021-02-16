@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import NewType, Literal, Tuple, Final, Dict
 
+from lib.utils import ImmutableInvertibleMapping
+
 Location = NewType('Location', int)
 
 
@@ -55,8 +57,10 @@ class Tile(Enum):
     GEMSTONE_DEALER = 'Gemstone Dealer'
 
 
-DEFAULT_LOCATIONS: Final[Dict[Location, Tile]] = {Location(i): t for i, t in enumerate(Tile, 1)}
-ROLL_LOCATIONS: Final[Dict[Location, Tile]] = {
+DEFAULT_LOCATIONS: Final[ImmutableInvertibleMapping] = ImmutableInvertibleMapping({
+    Location(i): t for i, t in enumerate(Tile, 1)
+})
+ROLL_LOCATIONS: Final[ImmutableInvertibleMapping] = ImmutableInvertibleMapping({
     Location(1): Tile.WAINWRIGHT,
     Location(2): Tile.FABRIC_WAREHOUSE,
     Location(3): Tile.SPICE_WAREHOUSE,
@@ -73,4 +77,4 @@ ROLL_LOCATIONS: Final[Dict[Location, Tile]] = {
     Location(14): Tile.SMALL_MOSQUE,
     Location(15): Tile.GREAT_MOSQUE,
     Location(16): Tile.GEMSTONE_DEALER,
-}
+})

@@ -1,9 +1,12 @@
 import typing
+from collections import Counter
 
 from actions import MosqueAction, GenericTileAction, GreenTileAction, RedTileAction, BlackMarketAction, TeaHouseAction, \
-    SultansPalaceAction
-from constants import Roll
-from load.core import load_good, tokens, tokens_match, load_roll, load_good_counter
+    SultansPalaceAction, CaravansaryAction, MarketAction
+from constants import Roll, Good
+from load.core import load_good, tokens, tokens_match, load_roll, load_good_counter, load_exact_card
+from player import PlayerState
+from tiles import MarketTileState
 
 
 def load_mosque_action(s: str) -> MosqueAction:
@@ -36,6 +39,46 @@ def load_possible_red_tile_action(s: str) -> typing.Union[Roll, RedTileAction]:
     final_roll = load_roll(subtokens[3])
     method = {'F': RedTileAction.TO_FOUR, 'R': RedTileAction.REROLL, '4': RedTileAction.TO_FOUR}[subtokens[2]]
     return RedTileAction(initial_roll, final_roll, method)
+
+
+def load_caravansary_action(s: str) -> CaravansaryAction:
+    subtokens = s.split(' ')
+    assert len(subtokens) == 3, f'Expected 3 subtokens for caravansary action; got {s}'
+
+    first, second = subtokens[:2]
+    if 'DISCARD'.startswith(first.upper()):
+        first_gain = CaravansaryAction.DISCARD
+    else:
+        first_gain = load_exact_card(first)
+
+    if 'DISCARD'.startswith(second.upper()):
+        second_gain = CaravansaryAction.DISCARD
+    else:
+        second_gain = load_exact_card(second)
+
+    cost = load_exact_card(subtokens[2])
+
+    return CaravansaryAction((first_gain, second_gain), cost)
+
+
+def load_market_action(s: str, ps: PlayerState, ts: MarketTileState) -> MarketAction:
+    subtokens = s.split(' ')
+    assert len(subtokens) == 2, f'Expected 2 subtokens for market action; got {s}'
+    assert ts.demand is not None, 'No demand currently set on tile'
+
+    goods, new_demand = subtokens
+    if 'ALL'.startswith(goods.upper()):
+        max_demand: typing.Counter[Good] = Counter()
+        for good in Good:
+            max_demand[good] = min(ps.cart_contents[good], ts.demand[good])
+        assert 0 < sum(max_demand.values()) <= 5, f'All would imply {sum(max_demand.values())} goods'
+        goods = max_demand
+    else:
+        goods = load_good_counter(goods)
+
+    new_demand = load_good_counter(new_demand)
+
+    return MarketAction(goods, new_demand)
 
 
 def load_black_market_action(s: str) -> BlackMarketAction:
