@@ -8,6 +8,7 @@ from actions import PlayerAction, YieldTurn, Move, Pay, ChooseReward, EncounterS
     PoliceStationAction, SultansPalaceAction, MosqueAction, OneGoodCardAction, ExtraMoveCardAction, NoMoveCardAction, \
     FiveLiraCardAction, ReturnAssistantCardAction, ArrestFamilyCardAction
 from constants import Location, Card, Roll, Good, Player, Tile, ROLL_LOCATIONS
+from lib.utils import ImmutableInvertibleMapping
 from player import PlayerState
 from tiles import TileState, MosqueTileState, PostOfficeTileState, CaravansaryTileState, WainwrightTileState, \
     MarketTileState, SultansPalaceTileState, GemstoneDealerTileState, initial_tile_state
@@ -21,15 +22,14 @@ def taxicab_dist(loc1: Location, loc2: Location) -> int:
 
 
 class GameState(object):
-    def __init__(self, players: List[Player], location_map: Dict[Location, Tile], small_demand: Counter[Good],
-                 large_demand: Counter[Good], governor_location: Location, smuggler_location: Location,
-                 player_hands: Dict[Player, Card]):
+    def __init__(self, players: List[Player], location_map: ImmutableInvertibleMapping[Location, Tile],
+                 small_demand: Counter[Good], large_demand: Counter[Good], governor_location: Location,
+                 smuggler_location: Location, player_hands: Dict[Player, Card]):
         self.players: Final = tuple(players)
         self.player_count: Final[int] = len(self.players)
         assert 2 <= self.player_count <= 5
         self.victory_threshold: Final[int] = 5 if self.player_count != 2 else 6
-        self.location_map: Final[Dict[Location, Tile]] = location_map
-        self.inverse_location_map: Final[Dict[Tile, Location]] = {v: k for k, v in self.location_map.items()}
+        self.location_map: Final[ImmutableInvertibleMapping[Location, Tile]] = location_map
 
         self.tile_states: Dict[Tile, TileState] = {tile: initial_tile_state(tile, self.player_count)
                                                    for loc, tile in self.location_map.items()}
@@ -48,8 +48,8 @@ class GameState(object):
                 p,
                 player_hands[p],
                 lira,
-                self.inverse_location_map[Tile.FOUNTAIN],
-                self.inverse_location_map[Tile.POLICE_STATION]
+                self.location_map.inverse[Tile.FOUNTAIN],
+                self.location_map.inverse[Tile.POLICE_STATION],
             )
 
         self.turn_state = TurnState(self.players)
@@ -127,11 +127,11 @@ class GameState(object):
         tile_state.family_members -= to_capture
         police_station_state.family_members |= to_capture
         for other_player in to_capture:
-            self.player_states[other_player].family_location = self.inverse_location_map[Tile.POLICE_STATION]
+            self.player_states[other_player].family_location = self.location_map.inverse[Tile.POLICE_STATION]
 
     def _location_from_roll(self, roll: Roll) -> Location:
         tile = ROLL_LOCATIONS[Location(sum(roll))]
-        return self.inverse_location_map[tile]
+        return self.location_map.inverse[tile]
 
     def _check_roll(self, roll: Union[Roll, RedTileAction]) -> int:
         if isinstance(roll, RedTileAction):
@@ -249,11 +249,11 @@ class GameState(object):
             return
 
         if isinstance(action, ArrestFamilyCardAction):
-            assert player_state.family_location != self.inverse_location_map[Tile.POLICE_STATION]
+            assert player_state.family_location != self.location_map.inverse[Tile.POLICE_STATION]
             self._discard(Card.ARREST_FAMILY)
             self.tile_states[self.location_map[player_state.family_location]].family_members.remove(player)
             self.tile_states[Tile.POLICE_STATION].family_members.add(player)
-            player_state.family_location = self.inverse_location_map[Tile.POLICE_STATION]
+            player_state.family_location = self.location_map.inverse[Tile.POLICE_STATION]
             self.outstanding_reward_choices += 1
             self._choose_reward(action.reward)
             return
@@ -396,7 +396,7 @@ class GameState(object):
         self.take_action(action.action)
         destination_tile_state.players.remove(player)
         tile_state.players.add(player)
-        player_state.location = self.inverse_location_map[Tile.POLICE_STATION]
+        player_state.location = self.location_map.inverse[Tile.POLICE_STATION]
 
     def _handle_fountain_action(self):
         player = self.turn_state.current_player

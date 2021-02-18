@@ -2,9 +2,10 @@ import typing
 from collections import Counter
 
 from actions import MosqueAction, GenericTileAction, GreenTileAction, RedTileAction, BlackMarketAction, TeaHouseAction, \
-    SultansPalaceAction, CaravansaryAction, MarketAction
-from constants import Roll, Good
-from load.core import load_good, tokens, tokens_match, load_roll, load_good_counter, load_exact_card
+    SultansPalaceAction, CaravansaryAction, MarketAction, PlayerAction, FiveLiraCardAction, OneGoodCardAction, \
+    ArrestFamilyCardAction, ChooseReward
+from constants import Roll, Good, Card
+from load.core import load_good, tokens, tokens_match, load_roll, load_good_counter, load_exact_card, action_subtokens
 from player import PlayerState
 from tiles import MarketTileState
 
@@ -22,13 +23,13 @@ def load_generic_action(s: str) -> GenericTileAction:
 def load_warehouse_action(s: str) -> typing.Union[GenericTileAction, GreenTileAction]:
     if not s:
         return GenericTileAction()
-    gt, good = s.split(' ')
+    gt, good = action_subtokens(s)
     assert tokens_match(tokens(gt), ['GREEN', 'TILE']), '{} is not GreenTile'.format(gt)
     return GreenTileAction(load_good(good))
 
 
 def load_possible_red_tile_action(s: str) -> typing.Union[Roll, RedTileAction]:
-    subtokens = s.split(' ')
+    subtokens = action_subtokens(s)
     if len(subtokens) == 1:
         return load_roll(subtokens[0])
 
@@ -42,7 +43,7 @@ def load_possible_red_tile_action(s: str) -> typing.Union[Roll, RedTileAction]:
 
 
 def load_caravansary_action(s: str) -> CaravansaryAction:
-    subtokens = s.split(' ')
+    subtokens = action_subtokens(s)
     assert len(subtokens) == 3, f'Expected 3 subtokens for caravansary action; got {s}'
 
     first, second = subtokens[:2]
@@ -62,7 +63,7 @@ def load_caravansary_action(s: str) -> CaravansaryAction:
 
 
 def load_market_action(s: str, ps: PlayerState, ts: MarketTileState) -> MarketAction:
-    subtokens = s.split(' ')
+    subtokens = action_subtokens(s)
     assert len(subtokens) == 2, f'Expected 2 subtokens for market action; got {s}'
     assert ts.demand is not None, 'No demand currently set on tile'
 
@@ -83,13 +84,33 @@ def load_market_action(s: str, ps: PlayerState, ts: MarketTileState) -> MarketAc
 
 def load_black_market_action(s: str) -> BlackMarketAction:
     good, rest = s.split(' ', maxsplit=1)
+    rest = rest.strip()
     return BlackMarketAction(load_good(good), load_possible_red_tile_action(rest))
 
 
 def load_tea_house_action(s: str) -> TeaHouseAction:
     call, rest = s.split(' ', maxsplit=1)
+    rest = rest.strip()
     return TeaHouseAction(int(call), load_possible_red_tile_action(rest))
 
 
 def load_sultans_palace_action(s: str) -> SultansPalaceAction:
     return SultansPalaceAction(load_good_counter(s))
+
+
+def load_all_phase_card_action(card: Card, ts: typing.List[str]) -> PlayerAction:
+    if card is Card.FIVE_LIRA:
+        assert not ts
+        return FiveLiraCardAction()
+
+    if card is Card.ONE_GOOD:
+        assert len(ts) == 1
+        return OneGoodCardAction(load_good(ts[0]))
+
+    if card is Card.ARREST_FAMILY:
+        assert len(ts) == 1
+        if ts[0] == '3':
+            return ArrestFamilyCardAction(ChooseReward(ChooseReward.LIRA))
+        return ArrestFamilyCardAction(ChooseReward(load_exact_card(ts[0])))
+
+    raise Exception(f'Card {card} is not always allowed')

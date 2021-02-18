@@ -8,7 +8,8 @@ class LocationTransformer(object):
     ROLL_SPEC = 'Roll'
     DIRECT_SPEC = 'Direct'
 
-    def __init__(self, spec: typing.Union[ROLL_SPEC, DIRECT_SPEC], locations: ImmutableInvertibleMapping):
+    def __init__(self, spec: typing.Union[ROLL_SPEC, DIRECT_SPEC],
+                 locations: ImmutableInvertibleMapping[Location, Tile]):
         self.spec: typing.Final = spec
         self.locations: typing.Final = locations
 

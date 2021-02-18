@@ -8,7 +8,7 @@ from constants import Player, Card
 
 
 class TurnState(object):
-    def __init__(self, players: typing.List[Player]):
+    def __init__(self, players: typing.Sequence[Player]):
         self.players: typing.Final = players
         self.current_player_idx: int = 0
         self.current_phase: int = 1

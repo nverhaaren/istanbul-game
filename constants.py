@@ -57,10 +57,10 @@ class Tile(Enum):
     GEMSTONE_DEALER = 'Gemstone Dealer'
 
 
-DEFAULT_LOCATIONS: Final[ImmutableInvertibleMapping] = ImmutableInvertibleMapping({
+DEFAULT_LOCATIONS: Final[ImmutableInvertibleMapping[Location, Tile]] = ImmutableInvertibleMapping({
     Location(i): t for i, t in enumerate(Tile, 1)
 })
-ROLL_LOCATIONS: Final[ImmutableInvertibleMapping] = ImmutableInvertibleMapping({
+ROLL_LOCATIONS: Final[ImmutableInvertibleMapping[Location, Tile]] = ImmutableInvertibleMapping({
     Location(1): Tile.WAINWRIGHT,
     Location(2): Tile.FABRIC_WAREHOUSE,
     Location(3): Tile.SPICE_WAREHOUSE,

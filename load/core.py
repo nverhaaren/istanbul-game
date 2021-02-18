@@ -35,6 +35,14 @@ def load_good_counter(s: str) -> typing.Counter[Good]:
     return result
 
 
+def action_subtokens(s: str) -> typing.List[str]:
+    return list(filter(None, s.split(' ')))
+
+
+def phase_subtokens(s: str) -> typing.List[str]:
+    return [t.strip() for t in s.split(';')]
+
+
 def tokens(s: str) -> typing.List[str]:
     result = [[s[0]]]
     last = s[0]
