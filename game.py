@@ -365,6 +365,7 @@ class GameState(object):
     def _handle_post_office_action(self):
         player = self.turn_state.current_player
         player_state = self.player_states[player]
+        assert self.location_map[player_state.location] is Tile.POST_OFFICE, 'Not at post office'
 
         # noinspection PyTypeChecker
         tile_state: PostOfficeTileState = self.tile_states[Tile.POST_OFFICE]
@@ -500,6 +501,7 @@ class GameState(object):
     def _handle_gemstone_dealer_action(self):
         player = self.turn_state.current_player
         player_state = self.player_states[player]
+        assert self.location_map[player_state.location] is Tile.GEMSTONE_DEALER, 'Not at gemstone dealer'
 
         # noinspection PyTypeChecker
         tile_state: GemstoneDealerTileState = self.tile_states[Tile.GEMSTONE_DEALER]

@@ -42,6 +42,12 @@ def load_possible_red_tile_action(s: str) -> typing.Union[Roll, RedTileAction]:
     return RedTileAction(initial_roll, final_roll, method)
 
 
+def load_black_market_action(s: str) -> BlackMarketAction:
+    good, rest = s.split(' ', maxsplit=1)
+    rest = rest.strip()
+    return BlackMarketAction(load_good(good), load_possible_red_tile_action(rest))
+
+
 def load_caravansary_action(s: str) -> CaravansaryAction:
     subtokens = action_subtokens(s)
     assert len(subtokens) == 3, f'Expected 3 subtokens for caravansary action; got {s}'
@@ -80,12 +86,6 @@ def load_market_action(s: str, ps: PlayerState, ts: MarketTileState) -> MarketAc
     new_demand = load_good_counter(new_demand)
 
     return MarketAction(goods, new_demand)
-
-
-def load_black_market_action(s: str) -> BlackMarketAction:
-    good, rest = s.split(' ', maxsplit=1)
-    rest = rest.strip()
-    return BlackMarketAction(load_good(good), load_possible_red_tile_action(rest))
 
 
 def load_tea_house_action(s: str) -> TeaHouseAction:

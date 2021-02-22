@@ -121,6 +121,8 @@ class SellAnyCardAction(PlayerAction):
 class PoliceStationAction(PlaceTileAction):
     def __init__(self, location: Location,
                  action: Union[PlaceTileAction, GreenTileAction, DoubleCardAction, SellAnyCardAction]):
+        # Do a manual type check
+        assert isinstance(action, (PlaceTileAction, GreenTileAction, DoubleCardAction, SellAnyCardAction))
         self.location: Final = location
         self.action: Final = action
 
