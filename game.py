@@ -1,6 +1,6 @@
 import collections
 from functools import partial
-from typing import Final, Union, Counter, Dict, List
+from typing import Final, Union, Counter, Dict, List, Sequence
 
 from actions import PlayerAction, YieldTurn, Move, Pay, ChooseReward, EncounterSmuggler, EncounterGovernor, \
     SkipTileAction, PlaceTileAction, GenericTileAction, GreenTileAction, RedTileAction, YellowTileAction, \
@@ -22,7 +22,7 @@ def taxicab_dist(loc1: Location, loc2: Location) -> int:
 
 
 class GameState(object):
-    def __init__(self, players: List[Player], location_map: ImmutableInvertibleMapping[Location, Tile],
+    def __init__(self, players: Sequence[Player], location_map: ImmutableInvertibleMapping[Location, Tile],
                  small_demand: Counter[Good], large_demand: Counter[Good], governor_location: Location,
                  smuggler_location: Location, player_hands: Dict[Player, Card]):
         self.players: Final = tuple(players)

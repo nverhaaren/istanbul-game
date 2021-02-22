@@ -1,15 +1,23 @@
 import itertools
 import typing
 from collections import Counter
+from functools import partial
 
-from constants import Good, Card, Roll
+from constants import Good, Card, Roll, Player, Tile
 from lib.utils import ImmutableInvertibleMapping, ImmutableMapping
 
 good_codes: typing.Mapping[str, Good] = ImmutableInvertibleMapping({g.name[0]: g for g in Good})
+player_codes: typing.Mapping[str, Player] = ImmutableInvertibleMapping({p.name[0]: p for p in Player})
 
 
 def load_good(s: str) -> Good:
     result = good_codes[s[0].upper()]
+    assert result.name.startswith(s.upper())
+    return result
+
+
+def load_player(s: str) -> Player:
+    result = player_codes[s[0].upper()]
     assert result.name.startswith(s.upper())
     return result
 
@@ -92,19 +100,27 @@ card_codes: typing.Mapping[str, Card] = ImmutableMapping({
     'DoubleGemstoneDealer': Card.DOUBLE_DEALER,
 })
 
-card_tokens: typing.Mapping[typing.Tuple[str], Card] = {tuple(tokens(k)): v for k, v in card_codes.items()}
+card_tokens: typing.Mapping[typing.Tuple[str, ...], Card] = {tuple(tokens(k)): v for k, v in card_codes.items()}
+tile_tokens: typing.Mapping[typing.Tuple[str, ...], Tile] = {t.name.split('_'): t for t in Tile}
 
 
-def load_card(s: str) -> typing.Set[Card]:
+T = typing.TypeVar('T')
+
+
+def _load(mapping: typing.Mapping[typing.Tuple[str, ...], T], s: str) -> typing.Set[T]:
     ts = tokens(s)
-    result: typing.Set[Card] = set()
-    for card_tts, card in card_tokens.items():
-        if card in result:
+    result: typing.Set[T] = set()
+    for canon_ts, v in mapping.items():
+        if v in result:
             continue
-        if tokens_match(ts, card_tts):
-            result.add(card)
+        if tokens_match(ts, canon_ts):
+            result.add(v)
 
     return result
+
+
+load_card: typing.Callable[[str], typing.Set[Card]] = partial(_load, card_tokens)
+load_tile: typing.Callable[[str], typing.Set[Tile]] = partial(_load, tile_tokens)
 
 
 def load_exact_card(s: str) -> Card:

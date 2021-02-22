@@ -1,3 +1,4 @@
+import itertools
 import typing
 
 from actions import PlayerAction, Move, YieldTurn, NoMoveCardAction, ExtraMoveCardAction, ReturnAssistantCardAction, \
@@ -14,6 +15,15 @@ from load.core import tokens_match, phase_subtokens, action_subtokens, load_card
 from load.location_transformer import LocationTransformer
 from tiles import MarketTileState
 from turn import phase_allowed_cards
+
+
+class TurnRow(object):
+    def __init__(self, move: str, action: str, rewards: str, gov: str, smug: str):
+        self.move: typing.Final = move
+        self.action: typing.Final = action
+        self.rewards: typing.Final = rewards
+        self.gov: typing.Final = gov
+        self.smug: typing.Final = smug
 
 
 class PhaseLoader(object):
@@ -62,6 +72,15 @@ class PhaseLoader(object):
         assert possible_cards, f'{card_action} does not match any currently legal cards'
         assert len(possible_cards) == 1, f'{card_action} matched multiple legal cards: {possible_cards}'
         return possible_cards.pop()
+
+    def load_turn(self, turn: TurnRow) -> typing.Iterator[PlayerAction]:
+        return itertools.chain(
+            self.load_phases_12(turn.move),
+            self.load_phase_3(turn.action),
+            self.load_choose_reward(turn.rewards),
+            self.load_governor(turn.gov),
+            self.load_smuggler(turn.smug),
+        )
 
     def load_phases_12(self, s: str) -> typing.Iterator[PlayerAction]:
         dont_pay = False
