@@ -42,7 +42,7 @@ class PostOfficeTileState(TileState):
         super(PostOfficeTileState, self).__init__()
         self.position: int = 0
 
-    def take_action(self) -> Tuple[Set[Good], int]:
+    def available(self) -> Tuple[Set[Good], int]:
         goods = set()
         lira = 0
         for i in range(len(self.MAIL)):
@@ -51,6 +51,10 @@ class PostOfficeTileState(TileState):
                 goods.add(self.MAIL[i][idx])
             else:
                 lira += self.MAIL[i][idx]
+        return goods, lira
+
+    def take_action(self) -> Tuple[Set[Good], int]:
+        goods, lira = self.available()
         self.position = (self.position + 1) % 5
         return goods, lira
 

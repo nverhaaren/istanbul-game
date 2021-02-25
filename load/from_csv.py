@@ -35,7 +35,11 @@ def turns_from_csv(f: typing.TextIO, through_row: typing.Optional[int] = None) -
         yield TurnRow(*(cell.replace('[', '').replace(']', '') for cell in row[:5]))
 
 
-def runner_from_csvs(setup_csv: typing.TextIO, turn_csv: typing.TextIO) -> Runner:
+def runner_from_csvs(
+        setup_csv: typing.TextIO,
+        turn_csv: typing.TextIO,
+        through_row: typing.Optional[int] = None
+) -> Runner:
     phase_loader = setup_from_csv(setup_csv)
-    runner = Runner(phase_loader, turns_from_csv(turn_csv))
+    runner = Runner(phase_loader, turns_from_csv(turn_csv, through_row))
     return runner

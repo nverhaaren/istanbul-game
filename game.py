@@ -57,6 +57,38 @@ class GameState(object):
 
         self.completed = False
 
+    @property
+    def current_player_idx(self) -> int:
+        return self.turn_state.current_player_idx
+
+    @property
+    def current_player(self) -> Player:
+        return self.turn_state.players[self.turn_state.current_player_idx]
+
+    @property
+    def current_player_state(self) -> PlayerState:
+        # self.player_states[self.current_player]
+        return self.player_states[self.turn_state.players[self.turn_state.current_player_idx]]
+
+    @property
+    def current_player_location(self) -> Location:
+        # self.current_player_state.location
+        return self.player_states[self.turn_state.players[self.turn_state.current_player_idx]].location
+
+    @property
+    def current_player_tile(self) -> Tile:
+        # self.location_map[self.current_player_location]
+        return self.location_map[
+            self.player_states[self.turn_state.players[self.turn_state.current_player_idx]].location
+        ]
+
+    @property
+    def current_player_tile_state(self) -> TileState:
+        # self.tile_states[self.current_player_tile]
+        return self.tile_states[self.location_map[
+            self.player_states[self.turn_state.players[self.turn_state.current_player_idx]].location
+        ]]
+
     def _check_completed(self):
         if self.turn_state.current_player != self.players[-1]:
             return False
