@@ -11,7 +11,7 @@ from load.phases import PhaseLoader
 
 class SetupRow(object):
     def __init__(self, head: str, values: typing.Sequence[str]):
-        self.head: typing.Final = head.upper()
+        self.head: typing.Final = '_'.join(head.upper().split())
         self.values: typing.Final = values
 
 
@@ -80,11 +80,11 @@ class SetupLoader(object):
         if setup_row.head == 'CARDS':
             self.cards = tuple(load_exact_card(v.replace(' ', '')) for v in setup_row.values)
             return
-        if setup_row.head == 'LOCATION SPEC':
+        if setup_row.head == 'LOCATION_SPEC':
             assert len(setup_row.values) == 1
-            self._location_spec = setup_row.values[0].upper()
+            self._location_spec = setup_row.values[0].title()
             return
-        if setup_row.head == 'TILE LOCATIONS':
+        if setup_row.head == 'TILE_LOCATIONS':
             assert len(setup_row.values) == 4
             assert len(self.tiles) < 13
             self.tiles += setup_row.values

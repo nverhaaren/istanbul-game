@@ -37,7 +37,7 @@ class PhaseLoader(object):
         self.location_transformer: typing.Final = location_transformer
 
     @classmethod
-    def allowed_cards(cls, gs: GameState) -> typing.FrozenSet[Card]:
+    def allowed_cards(cls, gs: GameState, tile: typing.Optional[Tile] = None) -> typing.FrozenSet[Card]:
         phase = gs.turn_state.current_phase
         allowed = set(phase_allowed_cards(phase))
         player_state = gs.player_states[gs.turn_state.current_player]
@@ -46,7 +46,7 @@ class PhaseLoader(object):
         if phase == 1 and not player_state.assistant_locations:
             allowed.discard(Card.RETURN_ASSISTANT)
         if phase == 3:
-            tile = gs.location_map[player_state.location]
+            tile = gs.location_map[player_state.location] if tile is None else tile
             card_tile_matches = {
                 Card.SELL_ANY: Tile.SMALL_MARKET,
                 Card.DOUBLE_PO: Tile.POST_OFFICE,
@@ -59,7 +59,7 @@ class PhaseLoader(object):
         return frozenset(allowed)
 
     @classmethod
-    def determine_card(cls, card_action: str, gs: GameState) -> Card:
+    def determine_card(cls, card_action: str, gs: GameState, tile: typing.Optional[Tile] = None) -> Card:
         subtokens = action_subtokens(card_action)
         player_state = gs.player_states[gs.turn_state.current_player]
         if subtokens[0].upper() == 'CARD':
@@ -68,18 +68,22 @@ class PhaseLoader(object):
             pre, card_desc = subtokens[0].split('-')
             assert pre.upper() == 'CARD'
             cards = load_card(card_desc)
-        possible_cards = cards & cls.allowed_cards(gs)
+        possible_cards = cards & cls.allowed_cards(gs, tile)
         assert possible_cards, f'{card_action} does not match any currently legal cards'
         assert len(possible_cards) == 1, f'{card_action} matched multiple legal cards: {possible_cards}'
         return possible_cards.pop()
 
     def load_turn(self, turn: TurnRow) -> typing.Iterator[PlayerAction]:
+        # todo: wrap in some assertion about yielding
+        if '!' in turn.move:
+            return self.load_phases_12(turn.move)
         return itertools.chain(
             self.load_phases_12(turn.move),
             self.load_phase_3(turn.action),
             self.load_choose_reward(turn.rewards),
             self.load_governor(turn.gov),
             self.load_smuggler(turn.smug),
+            [YieldTurn()],
         )
 
     def load_phases_12(self, s: str) -> typing.Iterator[PlayerAction]:
@@ -166,7 +170,7 @@ class PhaseLoader(object):
                 continue
             subtokens = action_subtokens(action)
             if action.upper().startswith('CARD'):
-                card = self.determine_card(action, self.gs)
+                card = self.determine_card(action, self.gs, tile)
                 if card in {Card.DOUBLE_PO, Card.DOUBLE_DEALER}:
                     assert len(subtokens) == 1
                     yield DoubleCardAction(card, (GenericTileAction(), GenericTileAction()))
@@ -183,11 +187,12 @@ class PhaseLoader(object):
                     assert len(subtokens) == 3, 'Incorrect number of arguments for sell any goods card'
                     assert tile is Tile.SMALL_MARKET, 'Can only use sell any goods card at small marker'
                     if not 'ALL'.startswith(subtokens[1].upper()):
-                        yield load_market_action(action, player_state, tile_state)
+                        yield SellAnyCardAction(load_market_action(action, player_state, tile_state))
                         continue
                     assert 0 < sum(player_state.cart_contents.values()) <= 5, \
                         f'All is ambiguous with {sum(player_state.cart_contents.values())} goods'
-                    yield MarketAction(player_state.cart_contents.copy(), load_good_counter(subtokens[2]))
+                    yield SellAnyCardAction(MarketAction(player_state.cart_contents.copy(),
+                                                         load_good_counter(subtokens[2])))
                     continue
                 yield load_all_phase_card_action(card, subtokens[1:])
                 continue
@@ -279,7 +284,7 @@ class PhaseLoader(object):
             gain, cost, roll = subtokens
             yield EncounterGovernor(
                 load_exact_card(gain),
-                Pay if cost == '-2' else load_exact_card(cost),
+                Pay() if cost == '-2' else load_exact_card(cost),
                 load_roll(roll)
             )
 
@@ -303,6 +308,6 @@ class PhaseLoader(object):
             gain, cost, roll = subtokens
             yield EncounterSmuggler(
                 load_good(gain),
-                Pay if cost == '-2' else load_good(cost),
+                Pay() if cost == '-2' else load_good(cost),
                 load_roll(roll)
             )

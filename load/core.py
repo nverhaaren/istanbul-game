@@ -31,7 +31,7 @@ def load_good_counter(s: str) -> typing.Counter[Good]:
         if not is_digit[idx]:
             good = load_good(s[idx])
             assert good not in result
-            result[good] = int(s[explicit_count_start:idx]) if explicit_count_start else 1
+            result[good] = int(s[explicit_count_start:idx]) if explicit_count_start is not None else 1
             explicit_count_start = None
             idx += 1
             continue
@@ -101,7 +101,7 @@ card_codes: typing.Mapping[str, Card] = ImmutableMapping({
 })
 
 card_tokens: typing.Mapping[typing.Tuple[str, ...], Card] = {tuple(tokens(k)): v for k, v in card_codes.items()}
-tile_tokens: typing.Mapping[typing.Tuple[str, ...], Tile] = {t.name.split('_'): t for t in Tile}
+tile_tokens: typing.Mapping[typing.Tuple[str, ...], Tile] = {tuple(t.name.split('_')): t for t in Tile}
 
 
 T = typing.TypeVar('T')

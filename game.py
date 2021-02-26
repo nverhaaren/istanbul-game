@@ -118,8 +118,8 @@ class GameState(object):
 
     def _spend(self, lira: int):
         player_state = self.player_states[self.turn_state.current_player]
-        assert player_state.lira >= lira, '{} does not have {} lira'.format(
-            self.turn_state.current_player, player_state.lira)
+        assert player_state.lira >= lira, '{} does not have {} lira; has {}'.format(
+            self.turn_state.current_player, lira, player_state.lira)
         player_state.lira -= lira
 
     def _acquire(self, good: Good):
@@ -225,10 +225,12 @@ class GameState(object):
                     # order, so in this case it is probably easier to invert (if I were doing this again I would
                     # make the action more explicit and have a separate action for interacting with the assistant,
                     # leaving the inference high-level)
-                    assert player_state.stack_size > 0, 'If no assistants in stack or at destination must end turn'
-                    player_state.stack_size -= 1
-                    player_state.assistant_locations.add(player_state.location)
-                    tile_state.assistants.add(player)
+                    if player_state.stack_size > 0:
+                        player_state.stack_size -= 1
+                        player_state.assistant_locations.add(player_state.location)
+                        tile_state.assistants.add(player)
+                    else:
+                        assert tile is Tile.FOUNTAIN, 'If no assistants in stack or at destination must end turn'
             if len(tile_state.players) == 1 or tile is Tile.FOUNTAIN:
                 self.turn_state.skip_phase_2()
             return

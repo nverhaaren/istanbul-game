@@ -3,7 +3,7 @@ import typing
 from actions import PlayerAction, YieldTurn, OneGoodCardAction, FiveLiraCardAction, ArrestFamilyCardAction, \
     YellowTileAction, Move, ExtraMoveCardAction, NoMoveCardAction, ReturnAssistantCardAction, Pay, PlaceTileAction, \
     SkipTileAction, DoubleCardAction, SellAnyCardAction, ChooseReward, EncounterGovernor, EncounterSmuggler, \
-    PoliceStationAction
+    PoliceStationAction, GreenTileAction
 from constants import Player, Card
 
 
@@ -61,7 +61,7 @@ class TurnState(object):
             return
         if isinstance(action, Pay):
             self.current_phase = 3
-        if isinstance(action, (PlaceTileAction, SkipTileAction, DoubleCardAction, SellAnyCardAction)):
+        if isinstance(action, (PlaceTileAction, SkipTileAction, DoubleCardAction, SellAnyCardAction, GreenTileAction)):
             if not isinstance(action, PoliceStationAction):
                 self.current_phase = 4
         # All other actions do not alter turn state

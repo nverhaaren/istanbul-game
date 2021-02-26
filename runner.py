@@ -11,7 +11,8 @@ class Runner(object):
         self.game_state: typing.Final = self.phase_loader.gs
 
     def run(self):
-        for turn in self.turn_source:
+        # idx for debugging
+        for idx, turn in enumerate(self.turn_source):
             actions = self.phase_loader.load_turn(turn)
             for action in actions:
                 self.game_state.take_action(action)

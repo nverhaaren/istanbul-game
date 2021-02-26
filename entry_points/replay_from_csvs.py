@@ -17,4 +17,8 @@ def main(cmdline=None):
     with open(args.setup_csv) as setup, open(args.moves_csv) as moves:
         runner = runner_from_csvs(setup, moves, through_row=args.through_row)
         runner.run()
-        json.dumps(serialize.game_state(runner.game_state), indent=4)
+        print(json.dumps(serialize.game_state(runner.game_state), indent=4))
+
+
+if __name__ == '__main__':
+    main()

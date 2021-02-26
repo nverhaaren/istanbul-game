@@ -10,7 +10,10 @@ class LocationTransformer(object):
 
     def __init__(self, spec: typing.Union[ROLL_SPEC, DIRECT_SPEC],
                  locations: ImmutableInvertibleMapping[Location, Tile]):
-        self.spec: typing.Final = spec
+        self.spec: typing.Final = {
+            self.ROLL_SPEC: self.ROLL_SPEC,
+            self.DIRECT_SPEC: self.DIRECT_SPEC,
+        }[spec]
         self.locations: typing.Final = locations
 
     def apply(self, location: Location) -> Location:
