@@ -82,3 +82,14 @@ class InvertibleMapping(_InvertibleMapping, MutableMapping):
         del self._mapping[key]
         if self._inverted is not None:
             del self._inverted._mapping[value]
+
+
+def extract_from_dict(key: str, d: dict) -> typing.Any:
+    assert key
+    if key[0] == '.':
+        key = key[1:]
+    keys = key.split('.')
+    result = d
+    for k in keys:
+        result = result[k]
+    return result
