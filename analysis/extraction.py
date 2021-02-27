@@ -41,7 +41,7 @@ def extract_player_state_series(states: typing.Iterator[dict], player: str, key:
                 'snapshot': before,
                 'update': update_between,
                 'removed_keys': list(removed_between),
-                'when': ['before', idx],
+                'when': ['before', idx + 1],
             }
         if before != after:
             update_during, removed_during = diff_dicts(before, after)
@@ -49,6 +49,6 @@ def extract_player_state_series(states: typing.Iterator[dict], player: str, key:
                 'snapshot': after,
                 'update': update_during,
                 'removed_keys': list(removed_during),
-                'when': ['after', idx],
+                'when': ['after', idx + 1],
             }
         previous = after
