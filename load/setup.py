@@ -87,7 +87,8 @@ class SetupLoader(object):
         if setup_row.head == 'TILE_LOCATIONS':
             assert len(setup_row.values) == 4
             assert len(self.tiles) < 13
-            self.tiles += setup_row.values
+            # Remove apostrophes from tile names
+            self.tiles += [s.replace("'", "") for s in setup_row.values]
             return
 
     def create_phase_loader(self) -> PhaseLoader:
