@@ -1,12 +1,12 @@
 import collections
 from functools import partial
-from typing import Final, Union, Counter, Dict, List, Sequence
+from typing import Final, Union, Counter, Dict, List, Sequence, Optional
 
 from actions import PlayerAction, YieldTurn, Move, Pay, ChooseReward, EncounterSmuggler, EncounterGovernor, \
     SkipTileAction, PlaceTileAction, GenericTileAction, GreenTileAction, RedTileAction, YellowTileAction, \
     CaravansaryAction, BlackMarketAction, TeaHouseAction, MarketAction, DoubleCardAction, SellAnyCardAction, \
     PoliceStationAction, SultansPalaceAction, MosqueAction, OneGoodCardAction, ExtraMoveCardAction, NoMoveCardAction, \
-    FiveLiraCardAction, ReturnAssistantCardAction, ArrestFamilyCardAction
+    FiveLiraCardAction, ReturnAssistantCardAction, ArrestFamilyCardAction, FountainAction
 from constants import Location, Card, Roll, Good, Player, Tile, ROLL_LOCATIONS
 from lib.utils import ImmutableInvertibleMapping
 from player import PlayerState
@@ -365,6 +365,7 @@ class GameState(object):
         tile_action_map = {
             MosqueAction: self._handle_mosque_action,
             PoliceStationAction: self._handle_police_station_action,
+            FountainAction: self._handle_fountain_action,
             BlackMarketAction: self._handle_black_market_action,
             CaravansaryAction: self._handle_caravansary_action,
             MarketAction: self._handle_market_action,
@@ -433,11 +434,18 @@ class GameState(object):
         tile_state.players.add(player)
         player_state.location = self.location_map.inverse[Tile.POLICE_STATION]
 
-    def _handle_fountain_action(self):
+    def _handle_fountain_action(self, action: Optional[FountainAction] = None):
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
-        for location in list(player_state.assistant_locations):
+        available_locations = player_state.assistant_locations
+        if action is not None:
+            assert action.assistant_locations <= available_locations
+            locations = action.assistant_locations
+        else:
+            locations = available_locations
+
+        for location in list(locations):
             player_state.stack_size += 1
             player_state.assistant_locations.remove(location)
             self.tile_states[self.location_map[location]].assistants.remove(player)

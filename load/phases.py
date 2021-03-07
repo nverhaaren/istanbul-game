@@ -4,7 +4,7 @@ import typing
 from actions import PlayerAction, Move, YieldTurn, NoMoveCardAction, ExtraMoveCardAction, ReturnAssistantCardAction, \
     YellowTileAction, Pay, SkipTileAction, GenericTileAction, DoubleCardAction, SultansPalaceAction, GreenTileAction, \
     PoliceStationAction, PlaceTileAction, SellAnyCardAction, MarketAction, ChooseReward, EncounterGovernor, \
-    EncounterSmuggler
+    EncounterSmuggler, FountainAction
 from constants import Card, Tile, Location
 from game import GameState
 from load.actions import load_all_phase_card_action, load_mosque_action, \
@@ -217,6 +217,15 @@ class PhaseLoader(object):
                 yield PoliceStationAction(location, dest_action)
                 continue
 
+            if tile is Tile.FOUNTAIN:
+                if len(subtokens) == 1 and subtokens[0].upper() == 'ALL':
+                    yield GenericTileAction()
+                    continue
+                locations = map(self.location_transformer.apply,
+                                typing.cast(typing.Iterator[Location], map(int, subtokens)))
+                yield FountainAction(locations)
+                continue
+
             if tile in {Tile.SMALL_MARKET, Tile.LARGE_MARKET}:
                 yield load_market_action(action, player_state, tile_state)
                 continue
@@ -228,12 +237,14 @@ class PhaseLoader(object):
                 Tile.SMALL_MOSQUE: load_mosque_action,
                 Tile.FRUIT_WAREHOUSE: load_warehouse_action,
                 # Police station is special, above
-                # Fountain is always generic
+                # Fountain is special, above
                 Tile.SPICE_WAREHOUSE: load_warehouse_action,
                 Tile.BLACK_MARKET: load_black_market_action,
                 Tile.CARAVANSARY: load_caravansary_action,
+                # Small market is special, above
                 Tile.TEA_HOUSE: load_tea_house_action,
                 Tile.SULTANS_PALACE: load_sultans_palace_action,
+                # Large market is special, above
                 # Wainwright is always generic
                 # Gemstone dealer is always generic
             }

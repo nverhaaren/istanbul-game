@@ -1,4 +1,4 @@
-from typing import Final, Union, Literal, Tuple, Counter
+from typing import Final, Union, Literal, Tuple, Counter, Iterable
 
 from constants import Location, Card, Good, Roll
 
@@ -135,6 +135,11 @@ class SultansPalaceAction(PlaceTileAction):
 class MosqueAction(PlaceTileAction):
     def __init__(self, good_color: Good):
         self.good_color = good_color
+
+
+class FountainAction(PlaceTileAction):
+    def __init__(self, assistant_locations: Iterable[Location]):
+        self.assistant_locations: Final = frozenset(assistant_locations)
 
 
 class OneGoodCardAction(PlayerAction):

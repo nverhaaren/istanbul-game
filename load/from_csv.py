@@ -16,7 +16,7 @@ def setup_from_csv(f: typing.TextIO) -> PhaseLoader:
             continue
         header = current_header if not row[0] else row[0]
         assert header
-        loader.load_row(SetupRow(header, list(filter(None, row[1:]))))
+        loader.load_row(SetupRow(header, list(filter(None, row[1:5]))))
 
     return loader.create_phase_loader()
 
