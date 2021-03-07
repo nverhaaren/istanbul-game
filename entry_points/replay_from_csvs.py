@@ -10,7 +10,7 @@ def main(cmdline=None):
     arg_parser = argparse.ArgumentParser('Replay a game or part of a game from csv files')
     arg_parser.add_argument('--setup_csv', required=True)
     arg_parser.add_argument('--moves_csv', required=True)
-    arg_parser.add_argument('--through_row', required=False,
+    arg_parser.add_argument('--through_row', required=False, type=int,
                             help='Optional number of rows in moves_csv to play through')
     args = arg_parser.parse_args(cmdline)
 
