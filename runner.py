@@ -1,3 +1,4 @@
+import logging
 import typing
 
 from actions import PlayerAction
@@ -17,7 +18,11 @@ class Runner(object):
         for idx, turn in enumerate(self.turn_source):
             actions = self.phase_loader.load_turn(turn)
             for action in actions:
-                self.game_state.take_action(action)
+                try:
+                    self.game_state.take_action(action)
+                except Exception:
+                    logging.error(f'Got exception at turn {idx}, action {action}')
+                    raise
 
     def _turn_states(self, actions: typing.Iterable[PlayerAction]) -> typing.Iterator[GameState]:
         for action in actions:
@@ -28,4 +33,9 @@ class Runner(object):
         yield iter([self.game_state])
         for idx, turn in enumerate(self.turn_source):
             actions = self.phase_loader.load_turn(turn)
-            yield self._turn_states(actions)
+            try:
+                game_state = self._turn_states(actions)
+            except Exception:
+                logging.error(f'Got exception at turn {idx}, actions: {actions}')
+                raise
+            yield game_state

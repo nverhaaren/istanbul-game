@@ -54,6 +54,7 @@ class GameState(object):
 
         self.turn_state = TurnState(self.players)
         self.outstanding_reward_choices: int = 0
+        self.family_member_acting: bool = False
 
         self.completed = False
 
@@ -149,6 +150,8 @@ class GameState(object):
         self.outstanding_reward_choices -= 1
 
     def _encounter_family_members(self):
+        if self.family_member_acting:
+            return
         current_tile = self.location_map[self.player_states[self.turn_state.current_player].location]
         if current_tile is Tile.POLICE_STATION:
             return
@@ -429,7 +432,9 @@ class GameState(object):
         tile_state.players.remove(player)
         destination_tile_state.players.add(player)
         player_state.location = action.location
+        self.family_member_acting = True
         self.take_action(action.action)
+        self.family_member_acting = False
         destination_tile_state.players.remove(player)
         tile_state.players.add(player)
         player_state.location = self.location_map.inverse[Tile.POLICE_STATION]

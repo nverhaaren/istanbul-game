@@ -187,7 +187,7 @@ class PhaseLoader(object):
                     assert len(subtokens) == 3, 'Incorrect number of arguments for sell any goods card'
                     assert tile is Tile.SMALL_MARKET, 'Can only use sell any goods card at small marker'
                     if not 'ALL'.startswith(subtokens[1].upper()):
-                        yield SellAnyCardAction(load_market_action(action, player_state, tile_state))
+                        yield SellAnyCardAction(load_market_action(' '.join(subtokens[1:]), player_state, tile_state))
                         continue
                     assert 0 < sum(player_state.cart_contents.values()) <= 5, \
                         f'All is ambiguous with {sum(player_state.cart_contents.values())} goods'
