@@ -2,7 +2,7 @@
 import argparse
 import json
 
-import serialize
+from .. import serialize
 from ..load.from_csv import runner_from_csvs
 
 

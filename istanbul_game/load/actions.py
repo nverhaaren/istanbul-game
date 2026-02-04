@@ -6,8 +6,8 @@ from ..actions import MosqueAction, GenericTileAction, GreenTileAction, RedTileA
     ArrestFamilyCardAction, ChooseReward
 from ..constants import Roll, Good, Card
 from .core import load_good, tokens, tokens_match, load_roll, load_good_counter, load_exact_card, action_subtokens
-from player import PlayerState
-from tiles import MarketTileState
+from ..player import PlayerState
+from ..tiles import MarketTileState
 
 
 def load_mosque_action(s: str) -> MosqueAction:

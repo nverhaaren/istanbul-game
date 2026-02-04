@@ -1,7 +1,7 @@
 import itertools
 import typing
 
-from lib.utils import extract_from_dict
+from ..lib.utils import extract_from_dict
 
 
 def diff_dicts(d1, d2):
