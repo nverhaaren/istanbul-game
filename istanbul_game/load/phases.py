@@ -270,7 +270,7 @@ class PhaseLoader(object):
             for subtoken in subtokens:
                 if subtoken in {'3', '6', '9', '12'}:
                     for _ in range(int(subtoken) // 3):
-                        yield ChooseReward(ChooseReward.LIRA)
+                        yield ChooseReward(typing.cast(typing.Literal['Lira'], ChooseReward.LIRA))
                     continue
                 card = load_exact_card(subtoken)
                 yield ChooseReward(card)

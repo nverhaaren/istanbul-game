@@ -104,7 +104,6 @@ def full_tile_state(tile: Tile, ts: TileState, loc: Location) -> dict:
         result['immutable'] = market_immutable_tile_state(ts)
         result['mutable'] = market_mutable_tile_state(ts)
         return result
-    # noinspection PyTypeChecker
     result['mutable'] = {
         MosqueTileState: mosque_tile_state,
         PostOfficeTileState: post_office_tile_state,
@@ -112,7 +111,7 @@ def full_tile_state(tile: Tile, ts: TileState, loc: Location) -> dict:
         WainwrightTileState: wainwright_tile_state,
         SultansPalaceTileState: sultans_palace_tile_state,
         GemstoneDealerTileState: gemstone_dealer_tile_state,
-    }[type(ts)](ts)
+    }[type(ts)](ts)  # type: ignore[operator]
     return result
 
 
@@ -156,7 +155,7 @@ def wainwright_tile_state(ts: WainwrightTileState) -> dict:
 
 def market_mutable_tile_state(ts: MarketTileState) -> dict:
     return {
-        'demand': good_counter(ts.demand),
+        'demand': good_counter(ts.demand) if ts.demand is not None else None,
         'expecting_demand': ts.expecting_demand,
     }
 
@@ -169,7 +168,8 @@ def market_immutable_tile_state(ts: MarketTileState) -> dict:
 
 
 def sultans_palace_tile_state(ts: SultansPalaceTileState) -> dict:
-    required: typing.Optional[typing.Dict[typing.Optional[Good], int]] = dict(ts.required())
+    ts_required = ts.required()
+    required: typing.Optional[typing.Dict[typing.Optional[Good], int]] = dict(ts_required) if ts_required is not None else None
     if required is not None and None not in required:
         required[None] = 0
     return {
