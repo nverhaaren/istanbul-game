@@ -1,18 +1,18 @@
 import itertools
 import typing
 
-from actions import PlayerAction, Move, YieldTurn, NoMoveCardAction, ExtraMoveCardAction, ReturnAssistantCardAction, \
+from ..actions import PlayerAction, Move, YieldTurn, NoMoveCardAction, ExtraMoveCardAction, ReturnAssistantCardAction, \
     YellowTileAction, Pay, SkipTileAction, GenericTileAction, DoubleCardAction, SultansPalaceAction, GreenTileAction, \
     PoliceStationAction, PlaceTileAction, SellAnyCardAction, MarketAction, ChooseReward, EncounterGovernor, \
     EncounterSmuggler, FountainAction
-from constants import Card, Tile, Location
-from game import GameState
-from load.actions import load_all_phase_card_action, load_mosque_action, \
+from ..constants import Card, Tile, Location
+from ..game import GameState
+from .actions import load_all_phase_card_action, load_mosque_action, \
     load_warehouse_action, load_black_market_action, load_caravansary_action, load_market_action, load_tea_house_action, \
     load_sultans_palace_action
-from load.core import tokens_match, phase_subtokens, action_subtokens, load_card, tokens, load_good_counter, \
+from .core import tokens_match, phase_subtokens, action_subtokens, load_card, tokens, load_good_counter, \
     load_exact_card, load_roll, load_good
-from load.location_transformer import LocationTransformer
+from .location_transformer import LocationTransformer
 from tiles import MarketTileState
 from turn import phase_allowed_cards
 

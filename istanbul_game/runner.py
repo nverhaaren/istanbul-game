@@ -1,9 +1,9 @@
 import logging
 import typing
 
-from actions import PlayerAction
-from game import GameState
-from load.phases import PhaseLoader, TurnRow
+from .actions import PlayerAction
+from .game import GameState
+from .load.phases import PhaseLoader, TurnRow
 
 
 class Runner(object):

@@ -1,7 +1,7 @@
 import collections
 from typing import Final, Counter, Set
 
-from constants import Player, Card, Location, Good
+from .constants import Player, Card, Location, Good
 
 
 class PlayerState(object):

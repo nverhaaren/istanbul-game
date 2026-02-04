@@ -1,10 +1,10 @@
 import typing
 
-from actions import PlayerAction, YieldTurn, OneGoodCardAction, FiveLiraCardAction, ArrestFamilyCardAction, \
+from .actions import PlayerAction, YieldTurn, OneGoodCardAction, FiveLiraCardAction, ArrestFamilyCardAction, \
     YellowTileAction, Move, ExtraMoveCardAction, NoMoveCardAction, ReturnAssistantCardAction, Pay, PlaceTileAction, \
     SkipTileAction, DoubleCardAction, SellAnyCardAction, ChooseReward, EncounterGovernor, EncounterSmuggler, \
     PoliceStationAction, GreenTileAction
-from constants import Player, Card
+from .constants import Player, Card
 
 
 class TurnState(object):

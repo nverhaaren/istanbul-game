@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import NewType, Literal, Tuple, Final, Dict
 
-from lib.utils import ImmutableInvertibleMapping
+from .lib.utils import ImmutableInvertibleMapping
 
 Location = NewType('Location', int)
 

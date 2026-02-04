@@ -1,7 +1,7 @@
 import collections
 from typing import Set, Dict, Tuple, List, Optional, Counter
 
-from constants import Player, Good, Card, Tile
+from .constants import Player, Good, Card, Tile
 
 
 class TileState(object):
