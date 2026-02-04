@@ -2,17 +2,17 @@ import collections
 from functools import partial
 from typing import Final, Union, Counter, Dict, List, Sequence, Optional
 
-from actions import PlayerAction, YieldTurn, Move, Pay, ChooseReward, EncounterSmuggler, EncounterGovernor, \
+from .actions import PlayerAction, YieldTurn, Move, Pay, ChooseReward, EncounterSmuggler, EncounterGovernor, \
     SkipTileAction, PlaceTileAction, GenericTileAction, GreenTileAction, RedTileAction, YellowTileAction, \
     CaravansaryAction, BlackMarketAction, TeaHouseAction, MarketAction, DoubleCardAction, SellAnyCardAction, \
     PoliceStationAction, SultansPalaceAction, MosqueAction, OneGoodCardAction, ExtraMoveCardAction, NoMoveCardAction, \
     FiveLiraCardAction, ReturnAssistantCardAction, ArrestFamilyCardAction, FountainAction
-from constants import Location, Card, Roll, Good, Player, Tile, ROLL_LOCATIONS
-from lib.utils import ImmutableInvertibleMapping
-from player import PlayerState
-from tiles import TileState, MosqueTileState, PostOfficeTileState, CaravansaryTileState, WainwrightTileState, \
+from .constants import Location, Card, Roll, Good, Player, Tile, ROLL_LOCATIONS
+from .lib.utils import ImmutableInvertibleMapping
+from .player import PlayerState
+from .tiles import TileState, MosqueTileState, PostOfficeTileState, CaravansaryTileState, WainwrightTileState, \
     MarketTileState, SultansPalaceTileState, GemstoneDealerTileState, initial_tile_state
-from turn import TurnState
+from .turn import TurnState
 
 
 def taxicab_dist(loc1: Location, loc2: Location) -> int:

@@ -1,6 +1,6 @@
 from typing import Final, Union, Literal, Tuple, Counter, Iterable
 
-from constants import Location, Card, Good, Roll
+from .constants import Location, Card, Good, Roll
 
 
 class PlayerAction(object):

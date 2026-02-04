@@ -1,11 +1,11 @@
 import typing
 from collections import Counter
 
-from actions import MosqueAction, GenericTileAction, GreenTileAction, RedTileAction, BlackMarketAction, TeaHouseAction, \
+from ..actions import MosqueAction, GenericTileAction, GreenTileAction, RedTileAction, BlackMarketAction, TeaHouseAction, \
     SultansPalaceAction, CaravansaryAction, MarketAction, PlayerAction, FiveLiraCardAction, OneGoodCardAction, \
     ArrestFamilyCardAction, ChooseReward
-from constants import Roll, Good, Card
-from load.core import load_good, tokens, tokens_match, load_roll, load_good_counter, load_exact_card, action_subtokens
+from ..constants import Roll, Good, Card
+from .core import load_good, tokens, tokens_match, load_roll, load_good_counter, load_exact_card, action_subtokens
 from player import PlayerState
 from tiles import MarketTileState
 

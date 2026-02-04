@@ -2,8 +2,8 @@ import csv
 
 import typing
 
-from load.phases import PhaseLoader, TurnRow
-from load.setup import SetupLoader, SetupRow
+from .phases import PhaseLoader, TurnRow
+from .setup import SetupLoader, SetupRow
 from runner import Runner
 
 

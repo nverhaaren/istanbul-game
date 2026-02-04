@@ -3,8 +3,8 @@ import typing
 from collections import Counter
 from functools import partial
 
-from constants import Good, Card, Roll, Player, Tile
-from lib.utils import ImmutableInvertibleMapping, ImmutableMapping
+from ..constants import Good, Card, Roll, Player, Tile
+from ..lib.utils import ImmutableInvertibleMapping, ImmutableMapping
 
 good_codes: typing.Mapping[str, Good] = ImmutableInvertibleMapping({g.name[0]: g for g in Good})
 player_codes: typing.Mapping[str, Player] = ImmutableInvertibleMapping({p.name[0]: p for p in Player})

@@ -1,9 +1,9 @@
 from collections import Counter
 
-from actions import Move, GenericTileAction, EncounterSmuggler, YieldTurn, MosqueAction, OneGoodCardAction, \
+from ..actions import Move, GenericTileAction, EncounterSmuggler, YieldTurn, MosqueAction, OneGoodCardAction, \
     PoliceStationAction, BlackMarketAction, EncounterGovernor, Pay
-from constants import Player, DEFAULT_LOCATIONS, Good, Location, Card
-from game import GameState
+from ..constants import Player, DEFAULT_LOCATIONS, Good, Location, Card
+from ..game import GameState
 
 if __name__ == '__main__':
     gs = GameState(

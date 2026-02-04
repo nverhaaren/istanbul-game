@@ -1,12 +1,12 @@
 import typing
 from collections import Counter, defaultdict
 
-from constants import Player, Location, Good, Tile, DEFAULT_LOCATIONS, Card
-from game import GameState
-from lib.utils import ImmutableInvertibleMapping
-from load.core import load_player, load_good_counter, load_exact_card, load_tile
-from load.location_transformer import LocationTransformer
-from load.phases import PhaseLoader
+from ..constants import Player, Location, Good, Tile, DEFAULT_LOCATIONS, Card
+from ..game import GameState
+from ..lib.utils import ImmutableInvertibleMapping
+from .core import load_player, load_good_counter, load_exact_card, load_tile
+from .location_transformer import LocationTransformer
+from .phases import PhaseLoader
 
 
 class SetupRow(object):

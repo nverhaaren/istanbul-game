@@ -1,11 +1,11 @@
 import typing
 
-from constants import Card, Good, Location, Tile, ROLL_LOCATIONS
-from game import GameState
-from player import PlayerState
-from tiles import TileState, MosqueTileState, PostOfficeTileState, CaravansaryTileState, WainwrightTileState, \
+from .constants import Card, Good, Location, Tile, ROLL_LOCATIONS
+from .game import GameState
+from .player import PlayerState
+from .tiles import TileState, MosqueTileState, PostOfficeTileState, CaravansaryTileState, WainwrightTileState, \
     MarketTileState, SultansPalaceTileState, GemstoneDealerTileState, GenericTileState
-from turn import TurnState
+from .turn import TurnState
 
 GENERIC_STATE_TILES = frozenset(
     {Tile.FABRIC_WAREHOUSE, Tile.FRUIT_WAREHOUSE, Tile.FOUNTAIN, Tile.SPICE_WAREHOUSE, Tile.BLACK_MARKET,

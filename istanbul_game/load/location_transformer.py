@@ -1,7 +1,7 @@
 import typing
 
-from constants import Location, Tile, ROLL_LOCATIONS
-from lib.utils import ImmutableInvertibleMapping
+from ..constants import Location, Tile, ROLL_LOCATIONS
+from ..lib.utils import ImmutableInvertibleMapping
 
 
 class LocationTransformer(object):

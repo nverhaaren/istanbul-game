@@ -3,7 +3,7 @@ import argparse
 import json
 
 import serialize
-from load.from_csv import runner_from_csvs
+from ..load.from_csv import runner_from_csvs
 
 
 def main(cmdline=None):
