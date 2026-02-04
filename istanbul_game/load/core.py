@@ -23,7 +23,7 @@ def load_player(s: str) -> Player:
 
 
 def load_good_counter(s: str) -> typing.Counter[Good]:
-    result = Counter()
+    result: typing.Counter[Good] = Counter()
     is_digit = [c.isdigit() for c in s]
     idx = 0
     explicit_count_start: typing.Optional[int] = None
@@ -132,4 +132,4 @@ def load_exact_card(s: str) -> Card:
 
 def load_roll(s: str) -> Roll:
     first, second = s.split('+')
-    return int(first), int(second)
+    return typing.cast(Roll, (int(first), int(second)))
