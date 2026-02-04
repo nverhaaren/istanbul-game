@@ -99,7 +99,10 @@ class SetupLoader(object):
 
         assert self._location_spec in {LocationTransformer.ROLL_SPEC, LocationTransformer.DIRECT_SPEC}, \
             f'Unknown location spec {self._location_spec}'
-        location_transformer = LocationTransformer(self._location_spec, location_map)
+        location_transformer = LocationTransformer(
+            typing.cast(typing.Literal['Roll', 'Direct'], self._location_spec),
+            location_map
+        )
 
         assert 0 < len(self.players) == len(self.cards) <= 5, 'Improper number of players/cards'
         assert len(set(self.players)) == len(self.players), 'Players not unique'
