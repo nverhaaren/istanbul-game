@@ -5,10 +5,10 @@ from ..lib.utils import ImmutableInvertibleMapping
 
 
 class LocationTransformer(object):
-    ROLL_SPEC = 'Roll'
-    DIRECT_SPEC = 'Direct'
+    ROLL_SPEC: typing.Final = 'Roll'
+    DIRECT_SPEC: typing.Final = 'Direct'
 
-    def __init__(self, spec: typing.Union[ROLL_SPEC, DIRECT_SPEC],
+    def __init__(self, spec: typing.Literal['Roll', 'Direct'],
                  locations: ImmutableInvertibleMapping[Location, Tile]):
         self.spec: typing.Final = {
             self.ROLL_SPEC: self.ROLL_SPEC,

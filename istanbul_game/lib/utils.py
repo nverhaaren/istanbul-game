@@ -62,8 +62,8 @@ class ImmutableInvertibleMapping(_InvertibleMapping[KT, VT]):
         self._hash = None
 
     @property
-    def inverse(self):
-        return typing.cast(ImmutableInvertibleMapping[VT, KT], super().inverse)
+    def inverse(self) -> 'ImmutableInvertibleMapping[VT, KT]':
+        return typing.cast('ImmutableInvertibleMapping[VT, KT]', super().inverse)
 
     def __hash__(self):
         if self._hash is None:
