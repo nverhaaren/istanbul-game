@@ -1,6 +1,6 @@
 import collections
 from functools import partial
-from typing import Final, Union, Counter, Dict, List, Sequence, Optional, cast, Callable
+from typing import Final, Union, Counter, Dict, List, Sequence, Optional, Callable
 
 from .actions import PlayerAction, YieldTurn, Move, Pay, ChooseReward, EncounterSmuggler, EncounterGovernor, \
     SkipTileAction, PlaceTileAction, GenericTileAction, GreenTileAction, RedTileAction, YellowTileAction, \
@@ -33,8 +33,10 @@ class GameState(object):
 
         self.tile_states: Dict[Tile, TileState] = {tile: initial_tile_state(tile, self.player_count)
                                                    for loc, tile in self.location_map.items()}
-        cast(MarketTileState, self.tile_states[Tile.SMALL_MARKET]).set_demand(small_demand)
-        cast(MarketTileState, self.tile_states[Tile.LARGE_MARKET]).set_demand(large_demand)
+        assert isinstance(small_market := self.tile_states[Tile.SMALL_MARKET], MarketTileState)
+        small_market.set_demand(small_demand)
+        assert isinstance(large_market := self.tile_states[Tile.LARGE_MARKET], MarketTileState)
+        large_market.set_demand(large_demand)
         self.tile_states[Tile.POLICE_STATION].family_members |= set(self.players)
         self.tile_states[Tile.FOUNTAIN].players |= set(self.players)
         self.tile_states[self.location_map[governor_location]].governor = True
@@ -112,7 +114,8 @@ class GameState(object):
         hand = self.player_states[self.turn_state.current_player].hand
         assert hand[card] >= 1, '{} does not have {}'.format(self.turn_state.current_player, card)
         hand[card] -= 1
-        cast(CaravansaryTileState, self.tile_states[Tile.CARAVANSARY]).discard_onto(card)
+        assert isinstance(caravansary := self.tile_states[Tile.CARAVANSARY], CaravansaryTileState)
+        caravansary.discard_onto(card)
 
     def _spend(self, lira: int):
         player_state = self.player_states[self.turn_state.current_player]
@@ -328,7 +331,8 @@ class GameState(object):
             n = sum(action.action.goods.values())
             gain = ((n + 1) * (n + 2)) // 2 - 1
             player_state.lira += gain
-            cast(MarketTileState, tile_state).set_demand(action.action.new_demand)
+            assert isinstance(tile_state, MarketTileState)
+            tile_state.set_demand(action.action.new_demand)
             self._encounter_family_members()
             return
 
@@ -400,7 +404,7 @@ class GameState(object):
         player_state = self.player_states[player]
         assert self.location_map[player_state.location] is Tile.POST_OFFICE, 'Not at post office'
 
-        tile_state = cast(PostOfficeTileState, self.tile_states[Tile.POST_OFFICE])
+        assert isinstance(tile_state := self.tile_states[Tile.POST_OFFICE], PostOfficeTileState)
 
         goods, lira = tile_state.take_action()
         for good in goods:
@@ -473,7 +477,7 @@ class GameState(object):
         player_state = self.player_states[player]
 
         tile = self.location_map[player_state.location]
-        tile_state = cast(CaravansaryTileState, self.tile_states[tile])
+        assert isinstance(tile_state := self.tile_states[tile], CaravansaryTileState)
         assert tile is Tile.CARAVANSARY
 
         count = 0
@@ -518,7 +522,7 @@ class GameState(object):
 
         tile = self.location_map[player_state.location]
         assert tile is Tile.SULTANS_PALACE
-        tile_state = cast(SultansPalaceTileState, self.tile_states[tile])
+        assert isinstance(tile_state := self.tile_states[tile], SultansPalaceTileState)
 
         self._trade(action.goods)
         tile_state.take_action(action.goods)
@@ -528,7 +532,7 @@ class GameState(object):
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
-        tile_state = cast(WainwrightTileState, self.tile_states[Tile.WAINWRIGHT])
+        assert isinstance(tile_state := self.tile_states[Tile.WAINWRIGHT], WainwrightTileState)
 
         assert player_state.cart_max <= 5, 'No room for additional extensions for {}'.format(player)
         self._spend(7)
@@ -542,7 +546,7 @@ class GameState(object):
         player_state = self.player_states[player]
         assert self.location_map[player_state.location] is Tile.GEMSTONE_DEALER, 'Not at gemstone dealer'
 
-        tile_state = cast(GemstoneDealerTileState, self.tile_states[Tile.GEMSTONE_DEALER])
+        assert isinstance(tile_state := self.tile_states[Tile.GEMSTONE_DEALER], GemstoneDealerTileState)
         assert tile_state.cost is not None, 'No more rubies to buy at the Gemstone Dealer'
         self._spend(tile_state.cost)
         tile_state.take_action()

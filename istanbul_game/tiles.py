@@ -48,12 +48,10 @@ class PostOfficeTileState(TileState):
         for i in range(len(self.MAIL)):
             idx = 0 if self.position > i else 1
             if i % 2 == 0:
-                good = self.MAIL[i][idx]
-                assert isinstance(good, Good)
+                assert isinstance(good := self.MAIL[i][idx], Good)
                 goods.add(good)
             else:
-                lira_value = self.MAIL[i][idx]
-                assert isinstance(lira_value, int)
+                assert isinstance(lira_value := self.MAIL[i][idx], int)
                 lira += lira_value
         return goods, lira
 
