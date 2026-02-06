@@ -10,6 +10,20 @@ Install the package in development mode with testing dependencies:
 pip install -e ".[dev]"
 ```
 
+### Pre-commit Hooks
+
+Set up pre-commit hooks to run type checking and tests before each commit:
+
+```bash
+pre-commit install
+```
+
+This will run `mypy` and `pytest` automatically on every commit. To run hooks manually:
+
+```bash
+pre-commit run --all-files
+```
+
 ## Development Commands
 
 ### Running Tests
