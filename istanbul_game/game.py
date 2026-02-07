@@ -1,6 +1,6 @@
 import collections
 from functools import partial
-from typing import Final, Union, Counter, Dict, List, Sequence, Optional
+from typing import Final, Union, Counter, Dict, List, Sequence, Optional, Callable
 
 from .actions import PlayerAction, YieldTurn, Move, Pay, ChooseReward, EncounterSmuggler, EncounterGovernor, \
     SkipTileAction, PlaceTileAction, GenericTileAction, GreenTileAction, RedTileAction, YellowTileAction, \
@@ -33,10 +33,10 @@ class GameState(object):
 
         self.tile_states: Dict[Tile, TileState] = {tile: initial_tile_state(tile, self.player_count)
                                                    for loc, tile in self.location_map.items()}
-        # noinspection PyUnresolvedReferences
-        self.tile_states[Tile.SMALL_MARKET].set_demand(small_demand)
-        # noinspection PyUnresolvedReferences
-        self.tile_states[Tile.LARGE_MARKET].set_demand(large_demand)
+        assert isinstance(small_market := self.tile_states[Tile.SMALL_MARKET], MarketTileState)
+        small_market.set_demand(small_demand)
+        assert isinstance(large_market := self.tile_states[Tile.LARGE_MARKET], MarketTileState)
+        large_market.set_demand(large_demand)
         self.tile_states[Tile.POLICE_STATION].family_members |= set(self.players)
         self.tile_states[Tile.FOUNTAIN].players |= set(self.players)
         self.tile_states[self.location_map[governor_location]].governor = True
@@ -114,8 +114,8 @@ class GameState(object):
         hand = self.player_states[self.turn_state.current_player].hand
         assert hand[card] >= 1, '{} does not have {}'.format(self.turn_state.current_player, card)
         hand[card] -= 1
-        # noinspection PyUnresolvedReferences
-        self.tile_states[Tile.CARAVANSARY].discard_onto(card)
+        assert isinstance(caravansary := self.tile_states[Tile.CARAVANSARY], CaravansaryTileState)
+        caravansary.discard_onto(card)
 
     def _spend(self, lira: int):
         player_state = self.player_states[self.turn_state.current_player]
@@ -331,7 +331,7 @@ class GameState(object):
             n = sum(action.action.goods.values())
             gain = ((n + 1) * (n + 2)) // 2 - 1
             player_state.lira += gain
-            # noinspection PyUnresolvedReferences
+            assert isinstance(tile_state, MarketTileState)
             tile_state.set_demand(action.action.new_demand)
             self._encounter_family_members()
             return
@@ -352,7 +352,7 @@ class GameState(object):
 
         assert isinstance(action, PlaceTileAction)
         if isinstance(action, GenericTileAction):
-            generic_action_map = {
+            generic_action_map: Dict[Tile, Callable[[], None]] = {
                 Tile.POST_OFFICE: self._handle_post_office_action,
                 Tile.FABRIC_WAREHOUSE: partial(self._max_cart, Good.RED),
                 Tile.FRUIT_WAREHOUSE: partial(self._max_cart, Good.YELLOW),
@@ -375,8 +375,7 @@ class GameState(object):
             TeaHouseAction: self._handle_tea_house_action,
             SultansPalaceAction: self._handle_sultans_palace_action,
         }
-        # noinspection PyTypeChecker
-        tile_action_map[action.__class__](action)
+        tile_action_map[action.__class__](action)  # type: ignore[operator]
         self._encounter_family_members()
 
     def _handle_mosque_action(self, action: MosqueAction):
@@ -405,8 +404,7 @@ class GameState(object):
         player_state = self.player_states[player]
         assert self.location_map[player_state.location] is Tile.POST_OFFICE, 'Not at post office'
 
-        # noinspection PyTypeChecker
-        tile_state: PostOfficeTileState = self.tile_states[Tile.POST_OFFICE]
+        assert isinstance(tile_state := self.tile_states[Tile.POST_OFFICE], PostOfficeTileState)
 
         goods, lira = tile_state.take_action()
         for good in goods:
@@ -448,7 +446,7 @@ class GameState(object):
             assert action.assistant_locations <= available_locations
             locations = action.assistant_locations
         else:
-            locations = available_locations
+            locations = frozenset(available_locations)
 
         for location in list(locations):
             player_state.stack_size += 1
@@ -479,8 +477,7 @@ class GameState(object):
         player_state = self.player_states[player]
 
         tile = self.location_map[player_state.location]
-        # noinspection PyTypeChecker
-        tile_state: CaravansaryTileState = self.tile_states[tile]
+        assert isinstance(tile_state := self.tile_states[tile], CaravansaryTileState)
         assert tile is Tile.CARAVANSARY
 
         count = 0
@@ -488,6 +485,7 @@ class GameState(object):
             if gain is CaravansaryAction.DISCARD:
                 count += 1
                 continue
+            assert isinstance(gain, Card)
             player_state.hand[gain] += 1
 
         for card in tile_state.take_action(count):
@@ -524,8 +522,7 @@ class GameState(object):
 
         tile = self.location_map[player_state.location]
         assert tile is Tile.SULTANS_PALACE
-        # noinspection PyTypeChecker
-        tile_state: SultansPalaceTileState = self.tile_states[tile]
+        assert isinstance(tile_state := self.tile_states[tile], SultansPalaceTileState)
 
         self._trade(action.goods)
         tile_state.take_action(action.goods)
@@ -535,8 +532,7 @@ class GameState(object):
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
-        # noinspection PyTypeChecker
-        tile_state: WainwrightTileState = self.tile_states[Tile.WAINWRIGHT]
+        assert isinstance(tile_state := self.tile_states[Tile.WAINWRIGHT], WainwrightTileState)
 
         assert player_state.cart_max <= 5, 'No room for additional extensions for {}'.format(player)
         self._spend(7)
@@ -550,8 +546,7 @@ class GameState(object):
         player_state = self.player_states[player]
         assert self.location_map[player_state.location] is Tile.GEMSTONE_DEALER, 'Not at gemstone dealer'
 
-        # noinspection PyTypeChecker
-        tile_state: GemstoneDealerTileState = self.tile_states[Tile.GEMSTONE_DEALER]
+        assert isinstance(tile_state := self.tile_states[Tile.GEMSTONE_DEALER], GemstoneDealerTileState)
         assert tile_state.cost is not None, 'No more rubies to buy at the Gemstone Dealer'
         self._spend(tile_state.cost)
         tile_state.take_action()

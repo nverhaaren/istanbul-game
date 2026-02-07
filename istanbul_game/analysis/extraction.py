@@ -1,7 +1,7 @@
 import itertools
 import typing
 
-from lib.utils import extract_from_dict
+from ..lib.utils import extract_from_dict
 
 
 def diff_dicts(d1, d2):
@@ -25,14 +25,17 @@ def extract_player_state_series(states: typing.Iterator[dict], player: str, key:
     yield {'snapshot': previous, 'update': previous, 'removed_keys': [], 'when': ['initial']}
 
     before_source, after_source = itertools.tee(states, 2)
-    before_states = (extract_from_dict(key, state['mutable']['player_states'][idx_of_player])
-                     for idx, state in enumerate(before_source)
-                     if (idx + 1) % player_count == idx_of_player)
+    before_states_gen = (extract_from_dict(key, state['mutable']['player_states'][idx_of_player])
+                         for idx, state in enumerate(before_source)
+                         if (idx + 1) % player_count == idx_of_player)
     after_states = (extract_from_dict(key, state['mutable']['player_states'][idx_of_player])
                     for idx, state in enumerate(after_source)
                     if idx % player_count == idx_of_player)
+    before_states: typing.Iterable[typing.Any]
     if idx_of_player == 0:
-        before_states = itertools.chain([previous], before_states)
+        before_states = itertools.chain([previous], before_states_gen)
+    else:
+        before_states = before_states_gen
 
     for idx, (before, after) in enumerate(zip(before_states, after_states)):
         if previous != before:

@@ -4,7 +4,7 @@ import typing
 
 from .phases import PhaseLoader, TurnRow
 from .setup import SetupLoader, SetupRow
-from runner import Runner
+from ..runner import Runner
 
 
 def setup_from_csv(f: typing.TextIO) -> PhaseLoader:

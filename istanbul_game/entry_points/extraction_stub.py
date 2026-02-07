@@ -4,8 +4,8 @@ import json
 
 import typing
 
-import serialize
-from analysis.extraction import extract_player_state_series
+from .. import serialize
+from ..analysis.extraction import extract_player_state_series
 from ..load.from_csv import runner_from_csvs
 
 

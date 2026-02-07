@@ -9,6 +9,8 @@ VT = typing.TypeVar('VT')
 
 
 class ImmutableMapping(Mapping[KT, VT]):
+    _mapping: dict[KT, VT]
+
     def __init__(self, *args, **kwargs):
         self._mapping = dict(*args, **kwargs)
 
@@ -23,20 +25,25 @@ class ImmutableMapping(Mapping[KT, VT]):
 
 
 class _InvertibleMapping(Mapping[KT, VT]):
+    _mapping: dict[KT, VT]
+    _inverted: Optional['_InvertibleMapping[VT, KT]']
+
     def __init__(self, *args, **kwargs):
         self._mapping = dict(*args, **kwargs)
         if len(set(self._mapping.values())) != len(self._mapping):
             raise TypeError('Mapping is not injective/invertible')
-        self._inverted: Optional[_InvertibleMapping] = None
+        self._inverted = None
 
-    def _bind(self, inverse):
-        self._inverted: _InvertibleMapping = inverse
+    def _bind(self, inverse: '_InvertibleMapping[VT, KT]') -> None:
+        self._inverted = inverse
 
     @property
-    def inverse(self):
+    def inverse(self) -> '_InvertibleMapping[VT, KT]':
         if self._inverted is None:
-            self._inverted: _InvertibleMapping[VT, KT] = self.__class__((v, k) for k, v in self._mapping.items())
-            self._inverted._bind(self)
+            # Cast needed because self.__class__ returns same type params, but swapping k,v inverts them
+            inverted = typing.cast('_InvertibleMapping[VT, KT]', self.__class__((v, k) for k, v in self._mapping.items()))
+            inverted._bind(self)
+            self._inverted = inverted
         return self._inverted
 
     def __getitem__(self, item: KT) -> VT:
@@ -55,8 +62,8 @@ class ImmutableInvertibleMapping(_InvertibleMapping[KT, VT]):
         self._hash = None
 
     @property
-    def inverse(self):
-        return typing.cast(ImmutableInvertibleMapping[VT, KT], super().inverse)
+    def inverse(self) -> 'ImmutableInvertibleMapping[VT, KT]':
+        return typing.cast('ImmutableInvertibleMapping[VT, KT]', super().inverse)
 
     def __hash__(self):
         if self._hash is None:
@@ -64,10 +71,10 @@ class ImmutableInvertibleMapping(_InvertibleMapping[KT, VT]):
         return self._hash
 
 
-class InvertibleMapping(_InvertibleMapping, MutableMapping):
+class InvertibleMapping(_InvertibleMapping[KT, VT], MutableMapping[KT, VT]):
     @property
-    def inverse(self):
-        return typing.cast(InvertibleMapping[VT, KT], super().inverse)
+    def inverse(self) -> 'InvertibleMapping[VT, KT]':
+        return typing.cast('InvertibleMapping[VT, KT]', super().inverse)
 
     def __setitem__(self, key: KT, value: VT):
         inverse = self.inverse

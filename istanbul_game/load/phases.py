@@ -13,8 +13,8 @@ from .actions import load_all_phase_card_action, load_mosque_action, \
 from .core import tokens_match, phase_subtokens, action_subtokens, load_card, tokens, load_good_counter, \
     load_exact_card, load_roll, load_good
 from .location_transformer import LocationTransformer
-from tiles import MarketTileState
-from turn import phase_allowed_cards
+from ..tiles import MarketTileState
+from ..turn import phase_allowed_cards
 
 
 class TurnRow(object):
@@ -270,7 +270,7 @@ class PhaseLoader(object):
             for subtoken in subtokens:
                 if subtoken in {'3', '6', '9', '12'}:
                     for _ in range(int(subtoken) // 3):
-                        yield ChooseReward(ChooseReward.LIRA)
+                        yield ChooseReward(typing.cast(typing.Literal['Lira'], ChooseReward.LIRA))
                     continue
                 card = load_exact_card(subtoken)
                 yield ChooseReward(card)

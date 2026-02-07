@@ -43,14 +43,16 @@ class PostOfficeTileState(TileState):
         self.position: int = 0
 
     def available(self) -> Tuple[Set[Good], int]:
-        goods = set()
+        goods: Set[Good] = set()
         lira = 0
         for i in range(len(self.MAIL)):
             idx = 0 if self.position > i else 1
             if i % 2 == 0:
-                goods.add(self.MAIL[i][idx])
+                assert isinstance(good := self.MAIL[i][idx], Good)
+                goods.add(good)
             else:
-                lira += self.MAIL[i][idx]
+                assert isinstance(lira_value := self.MAIL[i][idx], int)
+                lira += lira_value
         return goods, lira
 
     def take_action(self) -> Tuple[Set[Good], int]:
@@ -106,6 +108,7 @@ class MarketTileState(TileState):
 
     def take_action(self, payment: Counter[Good]) -> int:
         assert not self.expecting_demand
+        assert self.demand is not None
         for k in payment:
             assert payment[k] <= self.demand[k]
         self.expecting_demand = True
