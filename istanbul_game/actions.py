@@ -22,7 +22,7 @@ class Pay(PlayerAction):
 
 
 class ChooseReward(PlayerAction):
-    LIRA = 'Lira'
+    LIRA: Final = 'Lira'
     _RewardChoice = Union[Card, Literal['Lira']]
 
     def __init__(self, choice: _RewardChoice):
@@ -66,16 +66,14 @@ class GreenTileAction(PlayerAction):
 
 
 class RedTileAction(PlayerAction):
-    TO_FOUR = 'change a die to four'
-    REROLL = 'reroll'
+    TO_FOUR: Final = 'change a die to four'
+    REROLL: Final = 'reroll'
     _Method = Literal['change a die to four', 'reroll']
 
     def __init__(self, initial_roll: Roll, final_roll: Roll, method: _Method):
         self.initial_roll: Final = initial_roll
         self.final_roll: Final = final_roll
         self.method: Final = method
-
-    # validate method here?
 
 
 class YellowTileAction(PlayerAction):
@@ -84,7 +82,7 @@ class YellowTileAction(PlayerAction):
 
 
 class CaravansaryAction(PlaceTileAction):
-    DISCARD = 'top of discard pile'
+    DISCARD: Final = 'top of discard pile'
     _Gain = Union[Card, Literal['top of discard pile']]
 
     def __init__(self, gains: Tuple[_Gain, _Gain], cost: Card):
