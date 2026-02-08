@@ -270,7 +270,7 @@ class PhaseLoader(object):
             for subtoken in subtokens:
                 if subtoken in {'3', '6', '9', '12'}:
                     for _ in range(int(subtoken) // 3):
-                        yield ChooseReward(typing.cast(typing.Literal['Lira'], ChooseReward.LIRA))
+                        yield ChooseReward(ChooseReward.LIRA)
                     continue
                 card = load_exact_card(subtoken)
                 yield ChooseReward(card)
@@ -299,7 +299,7 @@ class PhaseLoader(object):
                 load_roll(roll)
             )
 
-    def load_smuggler(self, s: str):
+    def load_smuggler(self, s: str) -> typing.Iterator[PlayerAction]:
         actions = phase_subtokens(s)
         for idx, action in enumerate(actions):
             if not action:

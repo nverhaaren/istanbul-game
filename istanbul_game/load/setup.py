@@ -16,7 +16,7 @@ class SetupRow(object):
 
 
 class SetupLoader(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self.players: typing.Sequence[Player] = ()
         self.tiles: typing.List[str] = []
         self.small_demand: typing.Counter[Good] = Counter()
@@ -55,7 +55,7 @@ class SetupLoader(object):
 
         return ImmutableInvertibleMapping(final_mapping)
 
-    def load_row(self, setup_row: SetupRow):
+    def load_row(self, setup_row: SetupRow) -> None:
         if setup_row.head == 'NAMES':
             return
         if setup_row.head == 'ORDER':

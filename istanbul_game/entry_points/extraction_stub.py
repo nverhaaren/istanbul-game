@@ -3,13 +3,16 @@ import argparse
 import json
 
 import typing
+from typing import Iterable, TypeVar, Sequence, Optional
 
 from .. import serialize
 from ..analysis.extraction import extract_player_state_series
 from ..load.from_csv import runner_from_csvs
 
+T = TypeVar('T')
 
-def last(it: typing.Iterable):
+
+def last(it: Iterable[T]) -> T:
     ran = False
     for foo in it:
         ran = True
@@ -18,7 +21,7 @@ def last(it: typing.Iterable):
     return foo
 
 
-def main(cmdline=None):
+def main(cmdline: Optional[Sequence[str]] = None) -> None:
     arg_parser = argparse.ArgumentParser('Replay a game or part of a game from csv files')
     arg_parser.add_argument('--setup_csv', required=True)
     arg_parser.add_argument('--moves_csv', required=True)
