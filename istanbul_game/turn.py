@@ -18,7 +18,7 @@ class TurnState(object):
     def current_player(self) -> Player:
         return self.players[self.current_player_idx]
 
-    def skip_phase_2(self):
+    def skip_phase_2(self) -> None:
         assert self.current_phase == 2 and not self.yield_required
         self.current_phase = 3
 
@@ -44,7 +44,7 @@ class TurnState(object):
             return self.current_phase == 4
         return True  # All other actions can be taken at any time
 
-    def take_action(self, action: PlayerAction):
+    def take_action(self, action: PlayerAction) -> None:
         assert self.valid_action(action)
         if isinstance(action, YieldTurn):
             self.current_player_idx = (self.current_player_idx + 1) % len(self.players)

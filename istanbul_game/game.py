@@ -133,7 +133,7 @@ class GameState(object):
         assert isinstance(state, MosqueTileState)
         return state
 
-    def _check_completed(self):
+    def _check_completed(self) -> bool:
         if self.turn_state.current_player != self.players[-1]:
             return False
         if any(self.player_states[p].rubies >= self.victory_threshold for p in self.players):
@@ -141,49 +141,49 @@ class GameState(object):
             return True
         return False
 
-    def ranking(self):
+    def ranking(self) -> Dict[Player, List[int]]:
         scores = [(p.rubies, p.lira, sum(p.cart_contents.values()), sum(p.hand.values()), i)
                   for i in range(self.player_count) if (p := self.player_states[self.players[i]]) is p]
-        return {self.players[i]: score for *score, i in sorted(scores, reverse=True)}
+        return {self.players[i]: list(score) for *score, i in sorted(scores, reverse=True)}
 
-    def _move_to(self, location: Location):
+    def _move_to(self, location: Location) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
         self.tile_states[self.location_map[player_state.location]].players.remove(player)
         player_state.location = location
         self.tile_states[self.location_map[location]].players.add(player)
 
-    def _discard(self, card: Card):
+    def _discard(self, card: Card) -> None:
         hand = self.player_states[self.turn_state.current_player].hand
         assert hand[card] >= 1, '{} does not have {}'.format(self.turn_state.current_player, card)
         hand[card] -= 1
         self.caravansary_state.discard_onto(card)
 
-    def _spend(self, lira: int):
+    def _spend(self, lira: int) -> None:
         player_state = self.player_states[self.turn_state.current_player]
         assert player_state.lira >= lira, '{} does not have {} lira; has {}'.format(
             self.turn_state.current_player, lira, player_state.lira)
         player_state.lira -= lira
 
-    def _acquire(self, good: Good):
+    def _acquire(self, good: Good) -> None:
         player_state = self.player_states[self.turn_state.current_player]
         if player_state.cart_contents[good] == player_state.cart_max:
             return
         player_state.cart_contents[good] += 1
 
-    def _max_cart(self, good: Good):
+    def _max_cart(self, good: Good) -> None:
         assert good is not Good.BLUE
         player_state = self.player_states[self.turn_state.current_player]
         player_state.cart_contents[good] = player_state.cart_max
 
-    def _trade(self, goods: Counter[Good]):
+    def _trade(self, goods: Counter[Good]) -> None:
         player_state = self.player_states[self.turn_state.current_player]
         for good, amount in goods.items():
             assert player_state.cart_contents[good] >= amount, '{} does not have {} {}'.format(
                 self.turn_state.current_player, amount, good)
             player_state.cart_contents[good] -= amount
 
-    def _choose_reward(self, choice: ChooseReward):
+    def _choose_reward(self, choice: ChooseReward) -> None:
         if choice.choice is ChooseReward.LIRA:
             self.player_states[self.turn_state.current_player].lira += 3
         else:
@@ -191,7 +191,7 @@ class GameState(object):
             self.player_states[self.turn_state.current_player].hand[choice.choice] += 1
         self.outstanding_reward_choices -= 1
 
-    def _encounter_family_members(self):
+    def _encounter_family_members(self) -> None:
         if self.family_member_acting:
             return
         current_tile = self.location_map[self.player_states[self.turn_state.current_player].location]
@@ -223,7 +223,7 @@ class GameState(object):
             return sum(roll.final_roll)
         return sum(roll)
 
-    def take_action(self, action: PlayerAction):
+    def take_action(self, action: PlayerAction) -> None:
         assert not self.completed
         if self.outstanding_reward_choices:
             assert not isinstance(action, YieldTurn), 'Player needs to choose a reward for capturing family members'
@@ -428,7 +428,7 @@ class GameState(object):
                 raise AssertionError(f'Unexpected action type: {type(action)}')
         self._encounter_family_members()
 
-    def _handle_mosque_action(self, action: MosqueAction):
+    def _handle_mosque_action(self, action: MosqueAction) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
@@ -449,7 +449,7 @@ class GameState(object):
                 player_state.rubies += 1
             player_state.tiles.add(action.good_color)
 
-    def _handle_post_office_action(self):
+    def _handle_post_office_action(self) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
         assert self.location_map[player_state.location] is Tile.POST_OFFICE, 'Not at post office'
@@ -459,7 +459,7 @@ class GameState(object):
             self._acquire(good)
         player_state.lira += lira
 
-    def _handle_police_station_action(self, action: PoliceStationAction):
+    def _handle_police_station_action(self, action: PoliceStationAction) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
@@ -485,7 +485,7 @@ class GameState(object):
         tile_state.players.add(player)
         player_state.location = self.location_map.inverse[Tile.POLICE_STATION]
 
-    def _handle_fountain_action(self, action: Optional[FountainAction] = None):
+    def _handle_fountain_action(self, action: Optional[FountainAction] = None) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
@@ -501,7 +501,7 @@ class GameState(object):
             player_state.assistant_locations.remove(location)
             self.tile_states[self.location_map[location]].assistants.remove(player)
 
-    def _handle_black_market_action(self, action: BlackMarketAction):
+    def _handle_black_market_action(self, action: BlackMarketAction) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
@@ -520,7 +520,7 @@ class GameState(object):
         for _ in range(times):
             self._acquire(Good.BLUE)
 
-    def _handle_caravansary_action(self, action: CaravansaryAction):
+    def _handle_caravansary_action(self, action: CaravansaryAction) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
@@ -541,7 +541,7 @@ class GameState(object):
 
         self._discard(action.cost)
 
-    def _handle_market_action(self, action: MarketAction):
+    def _handle_market_action(self, action: MarketAction) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
@@ -554,7 +554,7 @@ class GameState(object):
         player_state.lira += lira
         tile_state.set_demand(action.new_demand)
 
-    def _handle_tea_house_action(self, action: TeaHouseAction):
+    def _handle_tea_house_action(self, action: TeaHouseAction) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
@@ -564,7 +564,7 @@ class GameState(object):
         total = self._check_roll(action.roll)
         player_state.lira += action.call if total >= action.call else 2
 
-    def _handle_sultans_palace_action(self, action: SultansPalaceAction):
+    def _handle_sultans_palace_action(self, action: SultansPalaceAction) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
@@ -575,7 +575,7 @@ class GameState(object):
         self.sultans_palace_state.take_action(action.goods)
         player_state.rubies += 1
 
-    def _handle_wainwright_action(self):
+    def _handle_wainwright_action(self) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
@@ -586,7 +586,7 @@ class GameState(object):
         if player_state.cart_max == 5:
             player_state.rubies += 1
 
-    def _handle_gemstone_dealer_action(self):
+    def _handle_gemstone_dealer_action(self) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
         assert self.location_map[player_state.location] is Tile.GEMSTONE_DEALER, 'Not at gemstone dealer'

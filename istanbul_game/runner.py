@@ -13,7 +13,7 @@ class Runner(object):
 
         self.game_state: typing.Final = self.phase_loader.gs
 
-    def run(self):
+    def run(self) -> None:
         # idx for debugging
         for idx, turn in enumerate(self.turn_source):
             actions = self.phase_loader.load_turn(turn)

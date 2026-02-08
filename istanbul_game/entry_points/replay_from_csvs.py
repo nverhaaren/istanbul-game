@@ -1,12 +1,13 @@
 #! /usr/bin/env python
 import argparse
 import json
+from typing import Sequence, Optional
 
 from .. import serialize
 from ..load.from_csv import runner_from_csvs
 
 
-def main(cmdline=None):
+def main(cmdline: Optional[Sequence[str]] = None) -> None:
     arg_parser = argparse.ArgumentParser('Replay a game or part of a game from csv files')
     arg_parser.add_argument('--setup_csv', required=True)
     arg_parser.add_argument('--moves_csv', required=True)

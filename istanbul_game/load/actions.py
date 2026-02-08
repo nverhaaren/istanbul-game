@@ -62,12 +62,12 @@ def load_caravansary_action(s: str) -> CaravansaryAction:
     second_gain: _Gain
 
     if 'DISCARD'.startswith(first.upper()):
-        first_gain = typing.cast(typing.Literal['top of discard pile'], CaravansaryAction.DISCARD)
+        first_gain = CaravansaryAction.DISCARD
     else:
         first_gain = load_exact_card(first)
 
     if 'DISCARD'.startswith(second.upper()):
-        second_gain = typing.cast(typing.Literal['top of discard pile'], CaravansaryAction.DISCARD)
+        second_gain = CaravansaryAction.DISCARD
     else:
         second_gain = load_exact_card(second)
 
@@ -119,7 +119,7 @@ def load_all_phase_card_action(card: Card, ts: typing.List[str]) -> PlayerAction
     if card is Card.ARREST_FAMILY:
         assert len(ts) == 1
         if ts[0] == '3':
-            return ArrestFamilyCardAction(ChooseReward(typing.cast(typing.Literal['Lira'], ChooseReward.LIRA)))
+            return ArrestFamilyCardAction(ChooseReward(ChooseReward.LIRA))
         return ArrestFamilyCardAction(ChooseReward(load_exact_card(ts[0])))
 
     raise Exception(f'Card {card} is not always allowed')

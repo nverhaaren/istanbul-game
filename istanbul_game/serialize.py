@@ -179,7 +179,7 @@ def sultans_palace_tile_state(ts: SultansPalaceTileState) -> dict:
     }
 
 
-def gemstone_dealer_tile_state(ts: GemstoneDealerTileState):
+def gemstone_dealer_tile_state(ts: GemstoneDealerTileState) -> dict:
     return {
         'cost': ts.cost,
     }
