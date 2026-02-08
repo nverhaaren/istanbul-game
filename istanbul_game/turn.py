@@ -81,4 +81,3 @@ def phase_allowed_cards(phase: int) -> typing.FrozenSet[Card]:
 
     assert phase == 3
     return frozenset(ALL_PHASE_CARDS | {Card.SELL_ANY, Card.DOUBLE_SULTAN, Card.DOUBLE_PO, Card.DOUBLE_DEALER})
-
