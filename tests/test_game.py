@@ -2,6 +2,8 @@
 import pytest
 from collections import Counter
 
+from tests.helpers import create_game, move_player_to_tile
+
 from istanbul_game.game import GameState, taxicab_dist
 from istanbul_game.constants import Player, Location, Tile, Good, Card
 from istanbul_game.actions import (
@@ -15,52 +17,11 @@ from istanbul_game.actions import (
     FiveLiraCardAction,
     NoMoveCardAction,
     ExtraMoveCardAction,
-    MosqueAction,
-    MarketAction,
-    BlackMarketAction,
-    TeaHouseAction,
-    FountainAction,
-    EncounterGovernor,
-    EncounterSmuggler,
+    ReturnAssistantCardAction,
+    ArrestFamilyCardAction,
+    YellowTileAction,
 )
-from istanbul_game.tiles import MarketTileState, GemstoneDealerTileState
-from istanbul_game.lib.utils import ImmutableInvertibleMapping
-
-
-def create_standard_location_map() -> ImmutableInvertibleMapping[Location, Tile]:
-    """Create a standard 4x4 board layout with tiles in enum order."""
-    tiles = list(Tile)
-    return ImmutableInvertibleMapping({Location(i): tiles[i - 1] for i in range(1, 17)})
-
-
-def create_game(
-    players: tuple[Player, ...] = (Player.RED, Player.BLUE),
-    location_map: ImmutableInvertibleMapping[Location, Tile] | None = None,
-    small_demand: Counter[Good] | None = None,
-    large_demand: Counter[Good] | None = None,
-    governor_location: Location = Location(1),
-    smuggler_location: Location = Location(2),
-    player_hands: dict[Player, Card] | None = None,
-) -> GameState:
-    """Create a GameState with sensible defaults for testing."""
-    if location_map is None:
-        location_map = create_standard_location_map()
-    if small_demand is None:
-        small_demand = Counter({Good.RED: 2, Good.GREEN: 2, Good.YELLOW: 1})
-    if large_demand is None:
-        large_demand = Counter({Good.RED: 1, Good.GREEN: 1, Good.YELLOW: 2, Good.BLUE: 1})
-    if player_hands is None:
-        player_hands = {p: Card.ONE_GOOD for p in players}
-
-    return GameState(
-        players=players,
-        location_map=location_map,
-        small_demand=small_demand,
-        large_demand=large_demand,
-        governor_location=governor_location,
-        smuggler_location=smuggler_location,
-        player_hands=player_hands,
-    )
+from istanbul_game.tiles import GemstoneDealerTileState
 
 
 class TestTaxicabDistance:
@@ -262,36 +223,22 @@ class TestAssistants:
         game = create_game()
         player_state = game.player_states[Player.RED]
         player = Player.RED
-
-        # Manually set up: place an assistant at a location
-        fountain_loc = game.location_map.inverse[Tile.FOUNTAIN]
-        target = Location(3)  # Pick a specific location
+        target = Location(3)
+        target_tile = game.location_map[target]
 
         # Pre-place assistant at target
-        target_tile = game.location_map[target]
         game.tile_states[target_tile].assistants.add(player)
         player_state.assistant_locations.add(target)
         player_state.stack_size -= 1
         initial_stack = player_state.stack_size
 
-        # Now move player to target (from fountain)
-        # First, use no-move card to stay at fountain (which is adjacent to many tiles)
-        # Actually, let's just manually move for this test
-        game.tile_states[Tile.FOUNTAIN].players.remove(player)
-        adjacent_to_target: Location | None = None
-        for i in range(1, 17):
-            loc = Location(i)
-            if taxicab_dist(target, loc) == 1:
-                adjacent_to_target = loc
-                break
-        assert adjacent_to_target is not None
-        player_state.location = adjacent_to_target
-        game.tile_states[game.location_map[adjacent_to_target]].players.add(player)
+        # Move player adjacent to target
+        adjacent = Location(4)  # Adjacent to Location(3)
+        move_player_to_tile(game, player, game.location_map[adjacent])
 
-        # Now make a legal move to target
+        # Move to target tile where assistant is waiting
         game.take_action(Move(target, skip_assistant=False))
 
-        # Should have picked up assistant (stack increased, location removed)
         assert player_state.stack_size == initial_stack + 1
         assert target not in player_state.assistant_locations
         assert player not in game.tile_states[target_tile].assistants
@@ -394,9 +341,73 @@ class TestCards:
         assert player_state.location == target
         assert player_state.hand[Card.EXTRA_MOVE] == 0
 
+    def test_return_assistant_card(self) -> None:
+        """Return assistant card retrieves an assistant from the board."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.RETURN_ASSISTANT] = 1
 
-class TestTileActions:
-    """Tests for tile-specific actions."""
+        # Place an assistant on the board
+        assistant_loc = Location(3)
+        assistant_tile = game.location_map[assistant_loc]
+        game.tile_states[assistant_tile].assistants.add(Player.RED)
+        player_state.assistant_locations.add(assistant_loc)
+        player_state.stack_size = 3
+
+        game.take_action(ReturnAssistantCardAction(assistant_loc))
+
+        assert player_state.stack_size == 4
+        assert assistant_loc not in player_state.assistant_locations
+        assert player_state.hand[Card.RETURN_ASSISTANT] == 0
+
+    def test_arrest_family_card(self) -> None:
+        """Arrest family card returns family member and gives reward."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.ARREST_FAMILY] = 1
+
+        # Move family member away from police station
+        family_loc = Location(5)
+        family_tile = game.location_map[family_loc]
+        police_tile = Tile.POLICE_STATION
+        game.tile_states[police_tile].family_members.remove(Player.RED)
+        game.tile_states[family_tile].family_members.add(Player.RED)
+        player_state.family_location = family_loc
+
+        initial_lira = player_state.lira
+        game.take_action(ArrestFamilyCardAction(ChooseReward(ChooseReward.LIRA)))
+
+        # Family should be back at police station
+        police_loc = game.location_map.inverse[Tile.POLICE_STATION]
+        assert player_state.family_location == police_loc
+        assert Player.RED in game.tile_states[police_tile].family_members
+        # Should have received 3 lira reward
+        assert player_state.lira == initial_lira + 3
+        assert player_state.hand[Card.ARREST_FAMILY] == 0
+
+    def test_yellow_tile_action(self) -> None:
+        """Yellow tile ability returns an assistant for 2 lira."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.tiles.add(Good.YELLOW)
+        player_state.lira = 10
+
+        # Place an assistant on the board
+        assistant_loc = Location(3)
+        assistant_tile = game.location_map[assistant_loc]
+        game.tile_states[assistant_tile].assistants.add(Player.RED)
+        player_state.assistant_locations.add(assistant_loc)
+        player_state.stack_size = 3
+
+        game.take_action(YellowTileAction(assistant_loc))
+
+        assert player_state.stack_size == 4
+        assert assistant_loc not in player_state.assistant_locations
+        assert player_state.lira == 8  # Cost 2 lira
+
+
+class TestGenericTileActions:
+    """Tests for generic tile actions (warehouses, gemstone dealer)."""
 
     def test_warehouse_fills_cart(self, two_player_game: GameState) -> None:
         """Warehouse fills cart with corresponding good."""
@@ -519,6 +530,54 @@ class TestVictoryConditions:
         game = create_game()
         game.player_states[Player.RED].rubies = 3
         game.player_states[Player.BLUE].rubies = 5
+
+        ranking = game.ranking()
+        players_ranked = list(ranking.keys())
+
+        assert players_ranked[0] == Player.BLUE
+        assert players_ranked[1] == Player.RED
+
+    def test_ranking_tiebreaker_lira(self) -> None:
+        """Lira breaks ties when rubies are equal."""
+        game = create_game()
+        game.player_states[Player.RED].rubies = 3
+        game.player_states[Player.BLUE].rubies = 3
+        game.player_states[Player.RED].lira = 10
+        game.player_states[Player.BLUE].lira = 15
+
+        ranking = game.ranking()
+        players_ranked = list(ranking.keys())
+
+        assert players_ranked[0] == Player.BLUE
+        assert players_ranked[1] == Player.RED
+
+    def test_ranking_tiebreaker_cart_contents(self) -> None:
+        """Cart contents breaks ties when rubies and lira are equal."""
+        game = create_game()
+        game.player_states[Player.RED].rubies = 3
+        game.player_states[Player.BLUE].rubies = 3
+        game.player_states[Player.RED].lira = 10
+        game.player_states[Player.BLUE].lira = 10
+        game.player_states[Player.RED].cart_contents = Counter({Good.RED: 1})
+        game.player_states[Player.BLUE].cart_contents = Counter({Good.RED: 2})
+
+        ranking = game.ranking()
+        players_ranked = list(ranking.keys())
+
+        assert players_ranked[0] == Player.BLUE
+        assert players_ranked[1] == Player.RED
+
+    def test_ranking_tiebreaker_hand_size(self) -> None:
+        """Hand size breaks ties when rubies, lira, and cart are equal."""
+        game = create_game()
+        game.player_states[Player.RED].rubies = 3
+        game.player_states[Player.BLUE].rubies = 3
+        game.player_states[Player.RED].lira = 10
+        game.player_states[Player.BLUE].lira = 10
+        game.player_states[Player.RED].cart_contents = Counter({Good.RED: 1})
+        game.player_states[Player.BLUE].cart_contents = Counter({Good.RED: 1})
+        game.player_states[Player.RED].hand = Counter({Card.ONE_GOOD: 1})
+        game.player_states[Player.BLUE].hand = Counter({Card.ONE_GOOD: 2})
 
         ranking = game.ranking()
         players_ranked = list(ranking.keys())
