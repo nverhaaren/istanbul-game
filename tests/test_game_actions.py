@@ -23,6 +23,7 @@ from istanbul_game.actions import (
     EncounterSmuggler,
     CaravansaryAction,
     NoMoveCardAction,
+    DoubleCardAction,
 )
 from istanbul_game.tiles import (
     MosqueTileState,
@@ -89,6 +90,55 @@ class TestMosqueAction:
 
         # Blue + Yellow pair should give a ruby
         assert player_state.rubies == initial_rubies + 1
+
+    def test_red_green_pair_gives_ruby(self) -> None:
+        """Getting red + green tiles gives a ruby."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+
+        # Already have red tile
+        player_state.tiles.add(Good.RED)
+        player_state.cart_contents[Good.GREEN] = 2
+        player_state.hand[Card.NO_MOVE] = 1
+
+        move_player_to_tile(game, Player.RED, Tile.SMALL_MOSQUE)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        initial_rubies = player_state.rubies
+        game.take_action(MosqueAction(Good.GREEN))
+
+        # Red + Green pair should give a ruby
+        assert player_state.rubies == initial_rubies + 1
+
+    def test_cannot_get_blue_tile_from_small_mosque(self) -> None:
+        """Cannot acquire blue tile from small mosque (wrong mosque)."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+
+        player_state.cart_contents[Good.BLUE] = 2
+        player_state.hand[Card.NO_MOVE] = 1
+
+        move_player_to_tile(game, Player.RED, Tile.SMALL_MOSQUE)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        # Small mosque only has RED and GREEN tiles, not BLUE
+        with pytest.raises(KeyError):
+            game.take_action(MosqueAction(Good.BLUE))
+
+    def test_cannot_get_red_tile_from_great_mosque(self) -> None:
+        """Cannot acquire red tile from great mosque (wrong mosque)."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+
+        player_state.cart_contents[Good.RED] = 2
+        player_state.hand[Card.NO_MOVE] = 1
+
+        move_player_to_tile(game, Player.RED, Tile.GREAT_MOSQUE)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        # Great mosque only has BLUE and YELLOW tiles, not RED
+        with pytest.raises(KeyError):
+            game.take_action(MosqueAction(Good.RED))
 
 
 class TestMarketAction:
@@ -216,6 +266,34 @@ class TestSultansPalaceAction:
         game.take_action(SultansPalaceAction(goods=payment))
 
         assert player_state.rubies == initial_rubies + 1
+
+    def test_remaining_goods_in_cart(self) -> None:
+        """Cart has correct remaining goods after sultan's palace payment."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.NO_MOVE] = 1
+
+        # Give player specific amounts of goods
+        player_state.cart_contents = Counter({
+            Good.RED: 3,
+            Good.GREEN: 2,
+            Good.YELLOW: 3,
+            Good.BLUE: 2,
+        })
+        player_state.cart_max = 10
+
+        move_player_to_tile(game, Player.RED, Tile.SULTANS_PALACE)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        # Pay 5 goods: 1 Blue, 1 Red, 1 Green, 2 Yellow
+        payment = Counter({Good.BLUE: 1, Good.RED: 1, Good.GREEN: 1, Good.YELLOW: 2})
+        game.take_action(SultansPalaceAction(goods=payment))
+
+        # Verify remaining goods
+        assert player_state.cart_contents[Good.RED] == 2  # 3 - 1
+        assert player_state.cart_contents[Good.GREEN] == 1  # 2 - 1
+        assert player_state.cart_contents[Good.YELLOW] == 1  # 3 - 2
+        assert player_state.cart_contents[Good.BLUE] == 1  # 2 - 1
 
 
 class TestWainwrightAction:
@@ -346,6 +424,35 @@ class TestFountainAction:
         assert player_state.stack_size == 4
         assert len(player_state.assistant_locations) == 0
 
+    def test_family_member_at_fountain_returns_assistants(self) -> None:
+        """Family member sent to fountain returns player's assistants."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.NO_MOVE] = 1
+
+        # Place some assistants on the board
+        loc1, loc2 = Location(3), Location(5)
+        tile1, tile2 = game.location_map[loc1], game.location_map[loc2]
+        player_state.assistant_locations = {loc1, loc2}
+        player_state.stack_size = 2
+        game.tile_states[tile1].assistants.add(Player.RED)
+        game.tile_states[tile2].assistants.add(Player.RED)
+
+        # Move to police station (player already has family member there)
+        move_player_to_tile(game, Player.RED, Tile.POLICE_STATION)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        # Send family member to fountain
+        fountain_loc = game.location_map.inverse[Tile.FOUNTAIN]
+        game.take_action(PoliceStationAction(
+            location=fountain_loc,
+            action=GenericTileAction()
+        ))
+
+        # All assistants should be back
+        assert player_state.stack_size == 4
+        assert len(player_state.assistant_locations) == 0
+
 
 class TestGovernorEncounter:
     """Tests for governor encounters."""
@@ -376,6 +483,36 @@ class TestGovernorEncounter:
 
         assert player_state.lira == initial_lira - 2
         assert player_state.hand[Card.FIVE_LIRA] == initial_cards + 1
+
+    def test_trade_card_for_card(self) -> None:
+        """Can trade a card to get a different card from governor."""
+        game = create_game(governor_location=Location(3))
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.NO_MOVE] = 1
+        player_state.hand[Card.ONE_GOOD] = 2  # Have card to trade
+
+        # Move to tile with governor
+        tile = game.location_map[Location(3)]
+        move_player_to_tile(game, Player.RED, tile)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+        game.take_action(SkipTileAction())
+
+        initial_one_good = player_state.hand[Card.ONE_GOOD]
+        initial_extra_move = player_state.hand[Card.EXTRA_MOVE]
+        initial_lira = player_state.lira
+
+        # Encounter governor, trade ONE_GOOD for EXTRA_MOVE card
+        game.take_action(EncounterGovernor(
+            gain=Card.EXTRA_MOVE,
+            cost=Card.ONE_GOOD,
+            roll=(3, 4)
+        ))
+
+        # Should have traded one card for another
+        assert player_state.hand[Card.ONE_GOOD] == initial_one_good - 1
+        assert player_state.hand[Card.EXTRA_MOVE] == initial_extra_move + 1
+        # Lira should be unchanged
+        assert player_state.lira == initial_lira
 
 
 class TestSmugglerEncounter:
@@ -459,3 +596,60 @@ class TestPoliceStationAction:
         assert Player.RED in game.tile_states[Tile.FABRIC_WAREHOUSE].family_members
         # Player should still be at police station
         assert player_state.location == game.location_map.inverse[Tile.POLICE_STATION]
+
+    def test_family_member_with_double_card(self) -> None:
+        """Family member can use double card action."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.NO_MOVE] = 1
+        player_state.hand[Card.DOUBLE_PO] = 1
+        player_state.cart_max = 10
+
+        move_player_to_tile(game, Player.RED, Tile.POLICE_STATION)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        initial_lira = player_state.lira
+
+        # Send family member to post office with double card
+        po_loc = game.location_map.inverse[Tile.POST_OFFICE]
+        game.take_action(PoliceStationAction(
+            location=po_loc,
+            action=DoubleCardAction(
+                Card.DOUBLE_PO,
+                (GenericTileAction(), GenericTileAction())
+            )
+        ))
+
+        # Should have received lira from two post office actions
+        assert player_state.lira > initial_lira
+        assert player_state.hand[Card.DOUBLE_PO] == 0
+
+    def test_family_member_sultan_palace(self) -> None:
+        """Family member can perform sultan's palace action."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.NO_MOVE] = 1
+
+        # Give player enough goods for sultan's palace
+        player_state.cart_contents = Counter({
+            Good.RED: 2,
+            Good.GREEN: 2,
+            Good.YELLOW: 2,
+            Good.BLUE: 2,
+        })
+        player_state.cart_max = 8
+
+        move_player_to_tile(game, Player.RED, Tile.POLICE_STATION)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        initial_rubies = player_state.rubies
+        sultan_loc = game.location_map.inverse[Tile.SULTANS_PALACE]
+
+        # Send family member to sultan's palace
+        payment = Counter({Good.BLUE: 1, Good.RED: 1, Good.GREEN: 1, Good.YELLOW: 2})
+        game.take_action(PoliceStationAction(
+            location=sultan_loc,
+            action=SultansPalaceAction(goods=payment)
+        ))
+
+        assert player_state.rubies == initial_rubies + 1

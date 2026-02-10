@@ -20,8 +20,10 @@ from istanbul_game.actions import (
     ReturnAssistantCardAction,
     ArrestFamilyCardAction,
     YellowTileAction,
+    DoubleCardAction,
+    SultansPalaceAction,
 )
-from istanbul_game.tiles import GemstoneDealerTileState
+from istanbul_game.tiles import GemstoneDealerTileState, PostOfficeTileState, SultansPalaceTileState
 
 
 class TestTaxicabDistance:
@@ -405,6 +407,98 @@ class TestCards:
         assert assistant_loc not in player_state.assistant_locations
         assert player_state.lira == 8  # Cost 2 lira
 
+    def test_double_sultan_card(self) -> None:
+        """Double sultan card allows two sultan's palace actions."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.DOUBLE_SULTAN] = 1
+
+        # Sultan's palace for 2 players starts at 5 goods required
+        # Need enough goods for two purchases (5 + 6 = 11 total goods)
+        # Both payments use yellow for the "any" slot, so need 4 total yellow
+        player_state.cart_contents[Good.RED] = 3
+        player_state.cart_contents[Good.GREEN] = 3
+        player_state.cart_contents[Good.YELLOW] = 5
+        player_state.cart_contents[Good.BLUE] = 4
+        player_state.cart_max = 15
+
+        move_player_to_tile(game, Player.RED, Tile.SULTANS_PALACE)
+        game.turn_state.current_phase = 3
+
+        initial_rubies = player_state.rubies
+
+        # First payment: 5 goods (Blue, Red, Green, Yellow, any=Yellow)
+        payment1 = Counter({Good.BLUE: 1, Good.RED: 1, Good.GREEN: 1, Good.YELLOW: 2})
+        # Second payment: 6 goods (Blue, Red, Green, Yellow, any=Yellow, Blue)
+        payment2 = Counter({Good.BLUE: 2, Good.RED: 1, Good.GREEN: 1, Good.YELLOW: 2})
+
+        game.take_action(DoubleCardAction(
+            Card.DOUBLE_SULTAN,
+            (SultansPalaceAction(payment1), SultansPalaceAction(payment2))
+        ))
+
+        assert player_state.rubies == initial_rubies + 2
+        assert player_state.hand[Card.DOUBLE_SULTAN] == 0
+
+    def test_double_post_office_card(self) -> None:
+        """Double post office card allows two post office actions."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.DOUBLE_PO] = 1
+        player_state.cart_max = 10  # Ensure enough room for goods
+
+        move_player_to_tile(game, Player.RED, Tile.POST_OFFICE)
+        game.turn_state.current_phase = 3
+
+        assert isinstance(
+            po_state := game.tile_states[Tile.POST_OFFICE],
+            PostOfficeTileState
+        )
+        initial_position = po_state.position
+        initial_lira = player_state.lira
+
+        game.take_action(DoubleCardAction(
+            Card.DOUBLE_PO,
+            (GenericTileAction(), GenericTileAction())
+        ))
+
+        # Position should advance by 2 (mod 5)
+        expected_position = (initial_position + 2) % 5
+        assert po_state.position == expected_position
+        # Should have received lira from both actions
+        assert player_state.lira > initial_lira
+        assert player_state.hand[Card.DOUBLE_PO] == 0
+
+    def test_double_gemstone_dealer_card(self) -> None:
+        """Double gemstone dealer card allows two gemstone purchases."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.DOUBLE_DEALER] = 1
+        player_state.lira = 50  # Plenty of lira for two purchases
+
+        move_player_to_tile(game, Player.RED, Tile.GEMSTONE_DEALER)
+        game.turn_state.current_phase = 3
+
+        assert isinstance(
+            dealer_state := game.tile_states[Tile.GEMSTONE_DEALER],
+            GemstoneDealerTileState
+        )
+        initial_cost = dealer_state.cost
+        assert initial_cost is not None
+        initial_rubies = player_state.rubies
+        initial_lira = player_state.lira
+
+        game.take_action(DoubleCardAction(
+            Card.DOUBLE_DEALER,
+            (GenericTileAction(), GenericTileAction())
+        ))
+
+        assert player_state.rubies == initial_rubies + 2
+        # Cost increases by 1 for each purchase
+        expected_cost = initial_cost + (initial_cost + 1)
+        assert player_state.lira == initial_lira - expected_cost
+        assert player_state.hand[Card.DOUBLE_DEALER] == 0
+
 
 class TestGenericTileActions:
     """Tests for generic tile actions (warehouses, gemstone dealer)."""
@@ -428,6 +522,30 @@ class TestGenericTileActions:
         two_player_game.take_action(GenericTileAction())
 
         assert player_state.cart_contents[Good.RED] == player_state.cart_max
+
+    def test_spice_warehouse_fills_cart(self) -> None:
+        """Spice warehouse fills cart with green goods."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.NO_MOVE] = 1
+
+        move_player_to_tile(game, Player.RED, Tile.SPICE_WAREHOUSE)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+        game.take_action(GenericTileAction())
+
+        assert player_state.cart_contents[Good.GREEN] == player_state.cart_max
+
+    def test_fruit_warehouse_fills_cart(self) -> None:
+        """Fruit warehouse fills cart with yellow goods."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.NO_MOVE] = 1
+
+        move_player_to_tile(game, Player.RED, Tile.FRUIT_WAREHOUSE)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+        game.take_action(GenericTileAction())
+
+        assert player_state.cart_contents[Good.YELLOW] == player_state.cart_max
 
     def test_gemstone_dealer(self) -> None:
         """Gemstone dealer sells ruby for lira."""
@@ -564,6 +682,27 @@ class TestVictoryConditions:
         ranking = game.ranking()
         players_ranked = list(ranking.keys())
 
+        assert players_ranked[0] == Player.BLUE
+        assert players_ranked[1] == Player.RED
+
+    def test_ranking_tiebreaker_cart_mixed_colors(self) -> None:
+        """Cart contents with mixed colors are counted correctly for tiebreaking."""
+        game = create_game()
+        game.player_states[Player.RED].rubies = 3
+        game.player_states[Player.BLUE].rubies = 3
+        game.player_states[Player.RED].lira = 10
+        game.player_states[Player.BLUE].lira = 10
+        # RED has 3 total goods (1 red + 2 blue)
+        game.player_states[Player.RED].cart_contents = Counter({Good.RED: 1, Good.BLUE: 2})
+        # BLUE has 4 total goods (1 of each color)
+        game.player_states[Player.BLUE].cart_contents = Counter({
+            Good.RED: 1, Good.BLUE: 1, Good.GREEN: 1, Good.YELLOW: 1
+        })
+
+        ranking = game.ranking()
+        players_ranked = list(ranking.keys())
+
+        # BLUE should win with 4 goods vs RED's 3 goods
         assert players_ranked[0] == Player.BLUE
         assert players_ranked[1] == Player.RED
 

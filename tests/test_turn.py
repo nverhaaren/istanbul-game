@@ -1,5 +1,6 @@
 """Tests for turn state management."""
 import pytest
+from collections import Counter
 
 from istanbul_game.turn import TurnState, phase_allowed_cards, ALL_PHASE_CARDS
 from istanbul_game.actions import (
@@ -17,6 +18,7 @@ from istanbul_game.actions import (
     ReturnAssistantCardAction,
     DoubleCardAction,
     SellAnyCardAction,
+    MarketAction,
     OneGoodCardAction,
     FiveLiraCardAction,
     ArrestFamilyCardAction,
@@ -227,6 +229,63 @@ class TestTurnStateTakeAction:
         state.current_phase = 2
         state.skip_phase_2()
         assert state.current_phase == 3
+
+    def test_skip_phase_2_requires_phase_2(self) -> None:
+        """Cannot skip phase 2 if not in phase 2."""
+        state = TurnState((Player.RED, Player.BLUE))
+        state.current_phase = 1
+        with pytest.raises(AssertionError):
+            state.skip_phase_2()
+
+        state.current_phase = 3
+        with pytest.raises(AssertionError):
+            state.skip_phase_2()
+
+    def test_skip_phase_2_not_allowed_when_yield_required(self) -> None:
+        """Cannot skip phase 2 if yield is required."""
+        state = TurnState((Player.RED, Player.BLUE))
+        state.current_phase = 2
+        state.yield_required = True
+        with pytest.raises(AssertionError):
+            state.skip_phase_2()
+
+    def test_no_move_advances_to_phase_2(self) -> None:
+        """No move card advances to phase 2."""
+        state = TurnState((Player.RED, Player.BLUE))
+        action = NoMoveCardAction(skip_assistant=False)
+        state.take_action(action)
+        assert state.current_phase == 2
+
+    def test_extra_move_advances_to_phase_2(self) -> None:
+        """Extra move card advances to phase 2."""
+        state = TurnState((Player.RED, Player.BLUE))
+        action = ExtraMoveCardAction(Move(Location(5), skip_assistant=False))
+        state.take_action(action)
+        assert state.current_phase == 2
+
+    def test_sell_any_card_valid_in_phase_3(self) -> None:
+        """Sell any card is valid in phase 3."""
+        state = TurnState((Player.RED, Player.BLUE))
+        state.current_phase = 3
+        action = SellAnyCardAction(MarketAction(
+            goods=Counter({Good.RED: 1}),
+            new_demand=Counter({Good.BLUE: 2, Good.GREEN: 2, Good.YELLOW: 1})
+        ))
+        assert state.valid_action(action) is True
+
+    def test_governor_encounter_valid_in_phase_4(self) -> None:
+        """Governor encounter is valid in phase 4."""
+        state = TurnState((Player.RED, Player.BLUE))
+        state.current_phase = 4
+        action = EncounterGovernor(gain=Card.FIVE_LIRA, cost=Pay(), roll=(3, 4))
+        assert state.valid_action(action) is True
+
+    def test_smuggler_encounter_valid_in_phase_4(self) -> None:
+        """Smuggler encounter is valid in phase 4."""
+        state = TurnState((Player.RED, Player.BLUE))
+        state.current_phase = 4
+        action = EncounterSmuggler(gain=Good.RED, cost=Pay(), roll=(3, 4))
+        assert state.valid_action(action) is True
 
 
 class TestPhaseAllowedCards:
