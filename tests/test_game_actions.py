@@ -141,6 +141,56 @@ class TestMosqueAction:
             game.take_action(MosqueAction(Good.RED))
 
 
+class TestWarehouseAction:
+    """Tests for warehouse tile actions with green tile."""
+    WAREHOUSE_COLORS = {
+        Tile.FABRIC_WAREHOUSE: Good.RED,
+        Tile.SPICE_WAREHOUSE: Good.GREEN,
+        Tile.FRUIT_WAREHOUSE: Good.YELLOW,
+    }
+
+    @pytest.mark.parametrize("warehouse,good", [
+        (Tile.FABRIC_WAREHOUSE, Good.BLUE),  # The colors _should not_ match what the warehouse fills.
+        (Tile.SPICE_WAREHOUSE, Good.RED),
+        (Tile.FRUIT_WAREHOUSE, Good.GREEN),
+    ])
+    def test_use_green_tile_at_warehouse(self, warehouse: Tile, good: Good) -> None:
+        """Can use green tile at warehouse to get corresponding chosen good, along with the normal warehouse action."""
+        from istanbul_game.actions import GreenTileAction
+
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.tiles.add(Good.GREEN)
+        player_state.hand[Card.NO_MOVE] = 1
+        player_state.lira = 10
+
+        move_player_to_tile(game, Player.RED, warehouse)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        initial_good_count = player_state.cart_contents[good]
+        initial_lira = player_state.lira
+
+        game.take_action(GreenTileAction(good))
+
+        assert player_state.cart_contents[good] == initial_good_count + 1
+        assert player_state.cart_contents[self.WAREHOUSE_COLORS[warehouse]] == player_state.cart_max
+        assert player_state.lira == initial_lira - 2  # Costs 2 lira
+
+    def test_cannot_use_green_tile_without_having_it(self) -> None:
+        """Cannot use green tile action without the green tile."""
+        from istanbul_game.actions import GreenTileAction
+
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.NO_MOVE] = 1
+
+        move_player_to_tile(game, Player.RED, Tile.FABRIC_WAREHOUSE)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        with pytest.raises(AssertionError):
+            game.take_action(GreenTileAction(Good.RED))
+
+
 class TestMarketAction:
     """Tests for market tile actions."""
 

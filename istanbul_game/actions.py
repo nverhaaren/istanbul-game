@@ -56,6 +56,11 @@ class GenericTileAction(PlaceTileAction):
 
 
 class GreenTileAction(PlayerAction):
+    """
+    This represents using the green tile at a warehouse
+
+    It both takes the warehouse action and allows an additional good.
+    """
     def __init__(self, good: Good):
         self.good: Final = good
 
