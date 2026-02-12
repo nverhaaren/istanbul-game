@@ -870,3 +870,86 @@ class TestPoliceStationAction:
         ))
 
         assert player_state.rubies == initial_rubies + 1
+
+    def test_family_member_ignores_other_players_and_npcs(self) -> None:
+        """Family member does not interact with other players, smuggler, or governor."""
+        # Test 1: Family member at tile with other player
+        game = create_game()
+        red_player = game.player_states[Player.RED]
+        blue_player = game.player_states[Player.BLUE]
+
+        # Put another player at the target tile
+        target_loc = Location(3)
+        target_tile = game.location_map[target_loc]
+        blue_player.location = target_loc
+        game.tile_states[target_tile].players.add(Player.BLUE)
+
+        # Also place blue player's assistant at target tile
+        blue_player.assistant_locations.add(target_loc)
+        game.tile_states[target_tile].assistants.add(Player.BLUE)
+
+        # Set up red player at police station
+        red_player.hand[Card.NO_MOVE] = 1
+        red_player.lira = 10
+        move_player_to_tile(game, Player.RED, Tile.POLICE_STATION)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        initial_lira = red_player.lira
+
+        # Send family member to tile with other player
+        game.take_action(PoliceStationAction(
+            location=target_loc,
+            action=GenericTileAction()
+        ))
+
+        # Verify family member arrived
+        assert red_player.family_location == target_loc
+        # Verify no lira was spent for payment to other player
+        assert red_player.lira == initial_lira
+
+        # Test 2: Family member at tile with governor
+        governor_loc = Location(5)
+        game = create_game(governor_location=governor_loc)
+        red_player = game.player_states[Player.RED]
+
+        red_player.hand[Card.NO_MOVE] = 1
+        red_player.lira = 10
+        move_player_to_tile(game, Player.RED, Tile.POLICE_STATION)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        gov_tile = game.location_map[governor_loc]
+        initial_lira = red_player.lira
+
+        # Send family member to tile with governor
+        game.take_action(PoliceStationAction(
+            location=governor_loc,
+            action=GenericTileAction()
+        ))
+
+        # Verify family member arrived but no interaction occurred
+        assert red_player.family_location == governor_loc
+        assert red_player.lira == initial_lira  # No payment to governor
+
+        # Test 3: Family member at tile with smuggler
+        smuggler_loc = Location(7)
+        game = create_game(smuggler_location=smuggler_loc)
+        red_player = game.player_states[Player.RED]
+
+        red_player.hand[Card.NO_MOVE] = 1
+        red_player.lira = 10
+        move_player_to_tile(game, Player.RED, Tile.POLICE_STATION)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        smug_tile = game.location_map[smuggler_loc]
+        initial_goods = sum(red_player.cart_contents.values())
+
+        # Send family member to tile with smuggler
+        game.take_action(PoliceStationAction(
+            location=smuggler_loc,
+            action=GenericTileAction()
+        ))
+
+        # Verify family member arrived but no interaction occurred
+        assert red_player.family_location == smuggler_loc
+        # No goods gained from smuggler
+        assert sum(red_player.cart_contents.values()) == initial_goods
