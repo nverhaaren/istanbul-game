@@ -24,7 +24,7 @@ from istanbul_game.actions import (
     CaravansaryAction,
     NoMoveCardAction,
     DoubleCardAction,
-    RedTileAction,
+    RedTileAction, YellowTileAction,
 )
 from istanbul_game.tiles import (
     MosqueTileState,
@@ -431,6 +431,28 @@ class TestRedTileAction:
                     method=RedTileAction.TO_FOUR
                 )
             ))
+
+
+class TestYellowTileAction:
+    def test_yellow_tile_action(self) -> None:
+        """Yellow tile ability returns an assistant for 2 lira."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.tiles.add(Good.YELLOW)
+        player_state.lira = 10
+
+        # Place an assistant on the board
+        assistant_loc = Location(3)
+        assistant_tile = game.location_map[assistant_loc]
+        game.tile_states[assistant_tile].assistants.add(Player.RED)
+        player_state.assistant_locations.add(assistant_loc)
+        player_state.stack_size = 3
+
+        game.take_action(YellowTileAction(assistant_loc))
+
+        assert player_state.stack_size == 4
+        assert assistant_loc not in player_state.assistant_locations
+        assert player_state.lira == 8  # Cost 2 lira
 
 
 class TestSultansPalaceAction:
