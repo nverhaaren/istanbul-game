@@ -24,6 +24,7 @@ from istanbul_game.actions import (
     CaravansaryAction,
     NoMoveCardAction,
     DoubleCardAction,
+    RedTileAction,
 )
 from istanbul_game.tiles import (
     MosqueTileState,
@@ -288,6 +289,148 @@ class TestTeaHouseAction:
         game.take_action(TeaHouseAction(call=10, roll=(2, 3)))
 
         assert player_state.lira == initial_lira + 2
+
+
+class TestRedTileAction:
+    """Tests for red tile usage at teahouse and black market."""
+
+    def test_red_tile_change_die_to_four_at_teahouse(self) -> None:
+        """Can use red tile to change a die to 4 at teahouse."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.tiles.add(Good.RED)
+        player_state.hand[Card.NO_MOVE] = 1
+
+        move_player_to_tile(game, Player.RED, Tile.TEA_HOUSE)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        initial_lira = player_state.lira
+        # Roll (2, 3) = 5, change one die to 4 -> (4, 3) = 7, meets call of 7
+        game.take_action(TeaHouseAction(
+            call=7,
+            roll=RedTileAction(
+                initial_roll=(2, 3),
+                final_roll=(4, 3),
+                method=RedTileAction.TO_FOUR
+            )
+        ))
+
+        assert player_state.lira == initial_lira + 7
+
+    def test_red_tile_reroll_at_teahouse(self) -> None:
+        """Can use red tile to reroll at teahouse."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.tiles.add(Good.RED)
+        player_state.hand[Card.NO_MOVE] = 1
+
+        move_player_to_tile(game, Player.RED, Tile.TEA_HOUSE)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        initial_lira = player_state.lira
+        # Reroll (1, 2) = 3 to (5, 6) = 11, meets call of 10
+        game.take_action(TeaHouseAction(
+            call=10,
+            roll=RedTileAction(
+                initial_roll=(1, 2),
+                final_roll=(5, 6),
+                method=RedTileAction.REROLL
+            )
+        ))
+
+        assert player_state.lira == initial_lira + 10
+
+    def test_red_tile_change_die_at_black_market(self) -> None:
+        """Can use red tile to change a die to 4 at black market."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.tiles.add(Good.RED)
+        player_state.hand[Card.NO_MOVE] = 1
+
+        move_player_to_tile(game, Player.RED, Tile.BLACK_MARKET)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        initial_red = player_state.cart_contents[Good.RED]
+        initial_blue = player_state.cart_contents[Good.BLUE]
+
+        # Roll (3, 3) = 6, change one die to 4 -> (4, 3) = 7, gives 1 blue bonus
+        game.take_action(BlackMarketAction(
+            Good.RED,
+            roll=RedTileAction(
+                initial_roll=(3, 3),
+                final_roll=(4, 3),
+                method=RedTileAction.TO_FOUR
+            )
+        ))
+
+        assert player_state.cart_contents[Good.RED] == initial_red + 1
+        assert player_state.cart_contents[Good.BLUE] == initial_blue + 1
+
+    def test_red_tile_reroll_at_black_market(self) -> None:
+        """Can use red tile to reroll at black market."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.tiles.add(Good.RED)
+        player_state.hand[Card.NO_MOVE] = 1
+        player_state.cart_max = 5
+
+        move_player_to_tile(game, Player.RED, Tile.BLACK_MARKET)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        initial_green = player_state.cart_contents[Good.GREEN]
+        initial_blue = player_state.cart_contents[Good.BLUE]
+
+        # Reroll (2, 3) = 5 to (5, 6) = 11, gives 3 blue bonus
+        game.take_action(BlackMarketAction(
+            Good.GREEN,
+            roll=RedTileAction(
+                initial_roll=(2, 3),
+                final_roll=(5, 6),
+                method=RedTileAction.REROLL
+            )
+        ))
+
+        assert player_state.cart_contents[Good.GREEN] == initial_green + 1
+        assert player_state.cart_contents[Good.BLUE] == initial_blue + 3
+
+    def test_cannot_use_red_tile_without_having_it_teahouse(self) -> None:
+        """Cannot use red tile at teahouse without having it."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.NO_MOVE] = 1
+        # Don't give player the red tile
+
+        move_player_to_tile(game, Player.RED, Tile.TEA_HOUSE)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        with pytest.raises(AssertionError):
+            game.take_action(TeaHouseAction(
+                call=7,
+                roll=RedTileAction(
+                    initial_roll=(2, 3),
+                    final_roll=(4, 3),
+                    method=RedTileAction.TO_FOUR
+                )
+            ))
+
+    def test_cannot_use_red_tile_without_having_it_black_market(self) -> None:
+        """Cannot use red tile at black market without having it."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.hand[Card.NO_MOVE] = 1
+
+        move_player_to_tile(game, Player.RED, Tile.BLACK_MARKET)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        with pytest.raises(AssertionError):
+            game.take_action(BlackMarketAction(
+                Good.RED,
+                roll=RedTileAction(
+                    initial_roll=(3, 3),
+                    final_roll=(4, 3),
+                    method=RedTileAction.TO_FOUR
+                )
+            ))
 
 
 class TestSultansPalaceAction:
