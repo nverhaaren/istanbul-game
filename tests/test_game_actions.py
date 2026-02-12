@@ -520,6 +520,7 @@ class TestWainwrightAction:
         player_state = game.player_states[Player.RED]
         player_state.lira = 10
         player_state.hand[Card.NO_MOVE] = 1
+        player_state.cart_contents.update({good: 1 for good in Good})  # Fill cart to show expansion
 
         move_player_to_tile(game, Player.RED, Tile.WAINWRIGHT)
         game.take_action(NoMoveCardAction(skip_assistant=False))
@@ -529,6 +530,7 @@ class TestWainwrightAction:
 
         assert player_state.cart_max == initial_cart + 1
         assert player_state.lira == 10 - 7  # Costs 7 lira
+        assert all(player_state.cart_contents[good] == 1 for good in Good)  # Cart contents should be unchanged
 
     def test_max_cart_gives_ruby(self) -> None:
         """Reaching max cart capacity gives a ruby."""
