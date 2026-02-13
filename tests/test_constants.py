@@ -1,6 +1,6 @@
 """Tests for constants module."""
-import pytest
-from istanbul_game.constants import Card, Good, Player, Tile, Location, ROLL_LOCATIONS
+
+from istanbul_game.constants import ROLL_LOCATIONS, Card, Good, Location, Player, Tile
 
 
 def test_card_enum_exists() -> None:

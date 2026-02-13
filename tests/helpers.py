@@ -1,10 +1,13 @@
 """Shared test utilities for Istanbul game tests."""
-from collections import Counter
-from typing import Dict
 
+from collections import Counter
+
+from istanbul_game.constants import Card, Good, Location, Player, Tile
 from istanbul_game.game import GameState
-from istanbul_game.constants import Player, Location, Tile, Good, Card
 from istanbul_game.lib.utils import ImmutableInvertibleMapping
+
+_DEFAULT_GOVERNOR_LOCATION = Location(1)
+_DEFAULT_SMUGGLER_LOCATION = Location(2)
 
 
 def create_standard_location_map() -> ImmutableInvertibleMapping[Location, Tile]:
@@ -18,9 +21,9 @@ def create_game(
     location_map: ImmutableInvertibleMapping[Location, Tile] | None = None,
     small_demand: Counter[Good] | None = None,
     large_demand: Counter[Good] | None = None,
-    governor_location: Location = Location(1),
-    smuggler_location: Location = Location(2),
-    player_hands: Dict[Player, Card] | None = None,
+    governor_location: Location = _DEFAULT_GOVERNOR_LOCATION,
+    smuggler_location: Location = _DEFAULT_SMUGGLER_LOCATION,
+    player_hands: dict[Player, Card] | None = None,
 ) -> GameState:
     """Create a GameState with sensible defaults for testing."""
     if location_map is None:

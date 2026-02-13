@@ -1,11 +1,21 @@
 from collections import Counter
 
-from ..actions import Move, GenericTileAction, EncounterSmuggler, YieldTurn, MosqueAction, OneGoodCardAction, \
-    PoliceStationAction, BlackMarketAction, EncounterGovernor, Pay
-from ..constants import Player, DEFAULT_LOCATIONS, Good, Location, Card
+from ..actions import (
+    BlackMarketAction,
+    EncounterGovernor,
+    EncounterSmuggler,
+    GenericTileAction,
+    MosqueAction,
+    Move,
+    OneGoodCardAction,
+    Pay,
+    PoliceStationAction,
+    YieldTurn,
+)
+from ..constants import DEFAULT_LOCATIONS, Card, Good, Location, Player
 from ..game import GameState
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     gs = GameState(
         [Player.BLUE, Player.YELLOW, Player.RED, Player.GREEN],
         DEFAULT_LOCATIONS,
@@ -18,7 +28,7 @@ if __name__ == '__main__':
             Player.YELLOW: Card.SELL_ANY,
             Player.RED: Card.RETURN_ASSISTANT,
             Player.GREEN: Card.ARREST_FAMILY,
-        }
+        },
     )
 
     # Round 1

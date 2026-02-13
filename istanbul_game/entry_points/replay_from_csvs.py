@@ -1,18 +1,19 @@
 #! /usr/bin/env python
 import argparse
 import json
-from typing import Sequence, Optional
+from collections.abc import Sequence
 
 from .. import serialize
 from ..load.from_csv import runner_from_csvs
 
 
-def main(cmdline: Optional[Sequence[str]] = None) -> None:
-    arg_parser = argparse.ArgumentParser('Replay a game or part of a game from csv files')
-    arg_parser.add_argument('--setup_csv', required=True)
-    arg_parser.add_argument('--moves_csv', required=True)
-    arg_parser.add_argument('--through_row', required=False, type=int,
-                            help='Optional number of rows in moves_csv to play through')
+def main(cmdline: Sequence[str] | None = None) -> None:
+    arg_parser = argparse.ArgumentParser("Replay a game or part of a game from csv files")
+    arg_parser.add_argument("--setup_csv", required=True)
+    arg_parser.add_argument("--moves_csv", required=True)
+    arg_parser.add_argument(
+        "--through_row", required=False, type=int, help="Optional number of rows in moves_csv to play through"
+    )
     args = arg_parser.parse_args(cmdline)
 
     with open(args.setup_csv) as setup, open(args.moves_csv) as moves:
@@ -21,5 +22,5 @@ def main(cmdline: Optional[Sequence[str]] = None) -> None:
         print(json.dumps(serialize.game_state(runner.game_state), indent=4))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

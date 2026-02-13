@@ -1,34 +1,34 @@
 #! /usr/bin/env python
 import argparse
 import json
-
-import typing
-from typing import Iterable, TypeVar, Sequence, Optional
+from collections.abc import Iterable, Sequence
+from typing import TypeVar
 
 from .. import serialize
 from ..analysis.extraction import extract_player_state_series
 from ..load.from_csv import runner_from_csvs
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def last(it: Iterable[T]) -> T:
     ran = False
-    for foo in it:
+    for foo in it:  # noqa: B007 - used after loop as return value
         ran = True
     assert ran
     # noinspection PyUnboundLocalVariable
     return foo
 
 
-def main(cmdline: Optional[Sequence[str]] = None) -> None:
-    arg_parser = argparse.ArgumentParser('Replay a game or part of a game from csv files')
-    arg_parser.add_argument('--setup_csv', required=True)
-    arg_parser.add_argument('--moves_csv', required=True)
-    arg_parser.add_argument('--player', required=True)
-    arg_parser.add_argument('--key', required=True)
-    arg_parser.add_argument('--through_row', required=False,
-                            help='Optional number of rows in moves_csv to play through')
+def main(cmdline: Sequence[str] | None = None) -> None:
+    arg_parser = argparse.ArgumentParser("Replay a game or part of a game from csv files")
+    arg_parser.add_argument("--setup_csv", required=True)
+    arg_parser.add_argument("--moves_csv", required=True)
+    arg_parser.add_argument("--player", required=True)
+    arg_parser.add_argument("--key", required=True)
+    arg_parser.add_argument(
+        "--through_row", required=False, help="Optional number of rows in moves_csv to play through"
+    )
     args = arg_parser.parse_args(cmdline)
 
     with open(args.setup_csv) as setup, open(args.moves_csv) as moves:
@@ -41,5 +41,5 @@ def main(cmdline: Optional[Sequence[str]] = None) -> None:
             print(json.dumps(update))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

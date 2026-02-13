@@ -1,24 +1,26 @@
 import collections
-from typing import Set, Dict, Tuple, List, Optional, Counter, NamedTuple
+from collections import Counter
+from typing import NamedTuple
 
-from .constants import Player, Good, Card, Tile
+from .constants import Card, Good, Player, Tile
 
 
 class MailSlot(NamedTuple):
     """A slot in the post office mail grid."""
+
     good_early: Good  # Good received when position has passed this slot
-    good_late: Good   # Good received when position hasn't passed this slot
-    lira_early: int   # Lira received when position has passed this slot
-    lira_late: int    # Lira received when position hasn't passed this slot
+    good_late: Good  # Good received when position hasn't passed this slot
+    lira_early: int  # Lira received when position has passed this slot
+    lira_late: int  # Lira received when position hasn't passed this slot
 
 
-class TileState(object):
+class TileState:
     def __init__(self) -> None:
         self.governor: bool = False
         self.smuggler: bool = False
-        self.assistants: Set[Player] = set()
-        self.family_members: Set[Player] = set()
-        self.players: Set[Player] = set()
+        self.assistants: set[Player] = set()
+        self.family_members: set[Player] = set()
+        self.players: set[Player] = set()
 
 
 class GenericTileState(TileState):
@@ -26,12 +28,12 @@ class GenericTileState(TileState):
 
 
 class MosqueTileState(TileState):
-    def __init__(self, goods: Set[Good]):
-        super(MosqueTileState, self).__init__()
-        self.available_tiles: Dict[Good, int] = {good: 2 for good in goods}
+    def __init__(self, goods: set[Good]):
+        super().__init__()
+        self.available_tiles: dict[Good, int] = {good: 2 for good in goods}
 
     def take_action(self, good: Good) -> None:
-        assert good in self.available_tiles, 'mosque does not have {} tile'.format(good)
+        assert good in self.available_tiles, f"mosque does not have {good} tile"
         if self.available_tiles[good] < 5:
             self.available_tiles[good] += 1
         else:
@@ -39,17 +41,17 @@ class MosqueTileState(TileState):
 
 
 class PostOfficeTileState(TileState):
-    MAIL_SLOTS: Tuple[MailSlot, MailSlot] = (
+    MAIL_SLOTS: tuple[MailSlot, MailSlot] = (
         MailSlot(Good.RED, Good.GREEN, 2, 1),
         MailSlot(Good.BLUE, Good.YELLOW, 2, 1),
     )
 
     def __init__(self) -> None:
-        super(PostOfficeTileState, self).__init__()
+        super().__init__()
         self.position: int = 0
 
-    def available(self) -> Tuple[Set[Good], int]:
-        goods: Set[Good] = set()
+    def available(self) -> tuple[set[Good], int]:
+        goods: set[Good] = set()
         lira = 0
         for i, slot in enumerate(self.MAIL_SLOTS):
             # Position > slot index means we've passed it, use "early" values
@@ -61,7 +63,7 @@ class PostOfficeTileState(TileState):
                 lira += slot.lira_late
         return goods, lira
 
-    def take_action(self) -> Tuple[Set[Good], int]:
+    def take_action(self) -> tuple[set[Good], int]:
         goods, lira = self.available()
         self.position = (self.position + 1) % 5
         return goods, lira
@@ -69,15 +71,15 @@ class PostOfficeTileState(TileState):
 
 class CaravansaryTileState(TileState):
     def __init__(self) -> None:
-        super(CaravansaryTileState, self).__init__()
-        self.discard_pile: List[Card] = []
+        super().__init__()
+        self.discard_pile: list[Card] = []
         self.awaiting_discard: bool = False
 
     def discard_onto(self, card: Card) -> None:
         self.discard_pile.append(card)
         self.awaiting_discard = False
 
-    def take_action(self, count: int) -> List[Card]:
+    def take_action(self, count: int) -> list[Card]:
         assert not self.awaiting_discard
         assert 0 <= count <= 2
         self.awaiting_discard = True
@@ -91,7 +93,7 @@ class CaravansaryTileState(TileState):
 
 class WainwrightTileState(TileState):
     def __init__(self, extensions: int):
-        super(WainwrightTileState, self).__init__()
+        super().__init__()
         self.extensions = extensions
 
     def take_action(self) -> None:
@@ -101,11 +103,11 @@ class WainwrightTileState(TileState):
 
 class MarketTileState(TileState):
     def __init__(self, one_cost: int):
-        super(MarketTileState, self).__init__()
+        super().__init__()
         self.one_cost: int = one_cost
 
         self.expecting_demand: bool = True
-        self.demand: Optional[Counter[Good]] = None
+        self.demand: Counter[Good] | None = None
 
     def set_demand(self, demand: Counter[Good]) -> None:
         assert sum(demand.values()) == 5
@@ -132,15 +134,15 @@ class SultansPalaceTileState(TileState):
     )
 
     def __init__(self, init_advanced: bool):
-        super(SultansPalaceTileState, self).__init__()
+        super().__init__()
         self.required_count: int = 4 if not init_advanced else 5
 
-    def required(self) -> Optional[Counter[Optional[Good]]]:
+    def required(self) -> Counter[Good | None] | None:
         assert self.required_count >= 4
         if self.required_count > 10:
             return None  # indicating no more rubies available
 
-        result: Counter[Optional[Good]] = collections.Counter({None: 0})
+        result: Counter[Good | None] = collections.Counter({None: 0})
         for i in range(self.required_count):
             result[self.GOOD_CYCLE[i % 5]] += 1
         return result
@@ -157,8 +159,8 @@ class SultansPalaceTileState(TileState):
 
 class GemstoneDealerTileState(TileState):
     def __init__(self, initial_cost: int):
-        super(GemstoneDealerTileState, self).__init__()
-        self.cost: Optional[int] = initial_cost
+        super().__init__()
+        self.cost: int | None = initial_cost
 
     def take_action(self) -> None:
         assert self.cost is not None
@@ -169,8 +171,15 @@ class GemstoneDealerTileState(TileState):
 
 def initial_tile_state(tile: Tile, player_count: int) -> TileState:
     assert 2 <= player_count <= 5
-    if tile in {Tile.FABRIC_WAREHOUSE, Tile.FRUIT_WAREHOUSE, Tile.POLICE_STATION, Tile.FOUNTAIN, Tile.SPICE_WAREHOUSE,
-                Tile.BLACK_MARKET, Tile.TEA_HOUSE}:
+    if tile in {
+        Tile.FABRIC_WAREHOUSE,
+        Tile.FRUIT_WAREHOUSE,
+        Tile.POLICE_STATION,
+        Tile.FOUNTAIN,
+        Tile.SPICE_WAREHOUSE,
+        Tile.BLACK_MARKET,
+        Tile.TEA_HOUSE,
+    }:
         return GenericTileState()
     simple_mapping = {
         Tile.POST_OFFICE: PostOfficeTileState,
@@ -200,4 +209,4 @@ def initial_tile_state(tile: Tile, player_count: int) -> TileState:
             initial_cost = 12
         return GemstoneDealerTileState(initial_cost)
 
-    raise ValueError(f'Unknown tile: {tile}')
+    raise ValueError(f"Unknown tile: {tile}")

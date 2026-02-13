@@ -1,39 +1,33 @@
 """Additional tests for game action handlers."""
-import pytest
+
+import typing
 from collections import Counter
 
-from tests.helpers import create_game, move_player_to_tile
+import pytest
 
-from istanbul_game.game import GameState
-from istanbul_game.constants import Player, Location, Tile, Good, Card
 from istanbul_game.actions import (
-    Move,
-    YieldTurn,
-    GenericTileAction,
-    SkipTileAction,
-    ChooseReward,
-    MosqueAction,
-    MarketAction,
     BlackMarketAction,
-    TeaHouseAction,
-    SultansPalaceAction,
-    PoliceStationAction,
-    FountainAction,
+    CaravansaryAction,
+    DoubleCardAction,
     EncounterGovernor,
     EncounterSmuggler,
-    CaravansaryAction,
+    GenericTileAction,
+    MarketAction,
+    MosqueAction,
     NoMoveCardAction,
-    DoubleCardAction,
-    RedTileAction, YellowTileAction,
+    PoliceStationAction,
+    RedTileAction,
+    SkipTileAction,
+    SultansPalaceAction,
+    TeaHouseAction,
+    YellowTileAction,
 )
+from istanbul_game.constants import Card, Good, Location, Player, Tile
 from istanbul_game.tiles import (
-    MosqueTileState,
-    MarketTileState,
-    SultansPalaceTileState,
     CaravansaryTileState,
     PostOfficeTileState,
-    WainwrightTileState,
 )
+from tests.helpers import create_game, move_player_to_tile
 
 
 class TestMosqueAction:
@@ -144,17 +138,21 @@ class TestMosqueAction:
 
 class TestWarehouseAction:
     """Tests for warehouse tile actions with green tile."""
-    WAREHOUSE_COLORS = {
+
+    WAREHOUSE_COLORS: typing.ClassVar[dict[Tile, Good]] = {
         Tile.FABRIC_WAREHOUSE: Good.RED,
         Tile.SPICE_WAREHOUSE: Good.GREEN,
         Tile.FRUIT_WAREHOUSE: Good.YELLOW,
     }
 
-    @pytest.mark.parametrize("warehouse,good", [
-        (Tile.FABRIC_WAREHOUSE, Good.BLUE),  # The colors _should not_ match what the warehouse fills.
-        (Tile.SPICE_WAREHOUSE, Good.RED),
-        (Tile.FRUIT_WAREHOUSE, Good.GREEN),
-    ])
+    @pytest.mark.parametrize(
+        "warehouse,good",
+        [
+            (Tile.FABRIC_WAREHOUSE, Good.BLUE),  # The colors _should not_ match what the warehouse fills.
+            (Tile.SPICE_WAREHOUSE, Good.RED),
+            (Tile.FRUIT_WAREHOUSE, Good.GREEN),
+        ],
+    )
     def test_use_green_tile_at_warehouse(self, warehouse: Tile, good: Good) -> None:
         """Can use green tile at warehouse to get corresponding chosen good, along with the normal warehouse action."""
         from istanbul_game.actions import GreenTileAction
@@ -209,10 +207,7 @@ class TestMarketAction:
         initial_lira = player_state.lira
         # Sell 2 RED goods - price at small market: 2 + 3 = 5
         new_demand = Counter({Good.BLUE: 2, Good.YELLOW: 2, Good.GREEN: 1})
-        game.take_action(MarketAction(
-            goods=Counter({Good.RED: 2}),
-            new_demand=new_demand
-        ))
+        game.take_action(MarketAction(goods=Counter({Good.RED: 2}), new_demand=new_demand))
 
         assert player_state.lira == initial_lira + 5
         assert player_state.cart_contents[Good.RED] == 0
@@ -306,14 +301,11 @@ class TestRedTileAction:
 
         initial_lira = player_state.lira
         # Roll (2, 3) = 5, change one die to 4 -> (4, 3) = 7, meets call of 7
-        game.take_action(TeaHouseAction(
-            call=7,
-            roll=RedTileAction(
-                initial_roll=(2, 3),
-                final_roll=(4, 3),
-                method=RedTileAction.TO_FOUR
+        game.take_action(
+            TeaHouseAction(
+                call=7, roll=RedTileAction(initial_roll=(2, 3), final_roll=(4, 3), method=RedTileAction.TO_FOUR)
             )
-        ))
+        )
 
         assert player_state.lira == initial_lira + 7
 
@@ -329,14 +321,11 @@ class TestRedTileAction:
 
         initial_lira = player_state.lira
         # Reroll (1, 2) = 3 to (5, 6) = 11, meets call of 10
-        game.take_action(TeaHouseAction(
-            call=10,
-            roll=RedTileAction(
-                initial_roll=(1, 2),
-                final_roll=(5, 6),
-                method=RedTileAction.REROLL
+        game.take_action(
+            TeaHouseAction(
+                call=10, roll=RedTileAction(initial_roll=(1, 2), final_roll=(5, 6), method=RedTileAction.REROLL)
             )
-        ))
+        )
 
         assert player_state.lira == initial_lira + 10
 
@@ -354,14 +343,11 @@ class TestRedTileAction:
         initial_blue = player_state.cart_contents[Good.BLUE]
 
         # Roll (3, 3) = 6, change one die to 4 -> (4, 3) = 7, gives 1 blue bonus
-        game.take_action(BlackMarketAction(
-            Good.RED,
-            roll=RedTileAction(
-                initial_roll=(3, 3),
-                final_roll=(4, 3),
-                method=RedTileAction.TO_FOUR
+        game.take_action(
+            BlackMarketAction(
+                Good.RED, roll=RedTileAction(initial_roll=(3, 3), final_roll=(4, 3), method=RedTileAction.TO_FOUR)
             )
-        ))
+        )
 
         assert player_state.cart_contents[Good.RED] == initial_red + 1
         assert player_state.cart_contents[Good.BLUE] == initial_blue + 1
@@ -381,14 +367,11 @@ class TestRedTileAction:
         initial_blue = player_state.cart_contents[Good.BLUE]
 
         # Reroll (2, 3) = 5 to (5, 6) = 11, gives 3 blue bonus
-        game.take_action(BlackMarketAction(
-            Good.GREEN,
-            roll=RedTileAction(
-                initial_roll=(2, 3),
-                final_roll=(5, 6),
-                method=RedTileAction.REROLL
+        game.take_action(
+            BlackMarketAction(
+                Good.GREEN, roll=RedTileAction(initial_roll=(2, 3), final_roll=(5, 6), method=RedTileAction.REROLL)
             )
-        ))
+        )
 
         assert player_state.cart_contents[Good.GREEN] == initial_green + 1
         assert player_state.cart_contents[Good.BLUE] == initial_blue + 3
@@ -404,14 +387,11 @@ class TestRedTileAction:
         game.take_action(NoMoveCardAction(skip_assistant=False))
 
         with pytest.raises(AssertionError):
-            game.take_action(TeaHouseAction(
-                call=7,
-                roll=RedTileAction(
-                    initial_roll=(2, 3),
-                    final_roll=(4, 3),
-                    method=RedTileAction.TO_FOUR
+            game.take_action(
+                TeaHouseAction(
+                    call=7, roll=RedTileAction(initial_roll=(2, 3), final_roll=(4, 3), method=RedTileAction.TO_FOUR)
                 )
-            ))
+            )
 
     def test_cannot_use_red_tile_without_having_it_black_market(self) -> None:
         """Cannot use red tile at black market without having it."""
@@ -423,14 +403,11 @@ class TestRedTileAction:
         game.take_action(NoMoveCardAction(skip_assistant=False))
 
         with pytest.raises(AssertionError):
-            game.take_action(BlackMarketAction(
-                Good.RED,
-                roll=RedTileAction(
-                    initial_roll=(3, 3),
-                    final_roll=(4, 3),
-                    method=RedTileAction.TO_FOUR
+            game.take_action(
+                BlackMarketAction(
+                    Good.RED, roll=RedTileAction(initial_roll=(3, 3), final_roll=(4, 3), method=RedTileAction.TO_FOUR)
                 )
-            ))
+            )
 
 
 class TestYellowTileAction:
@@ -489,12 +466,14 @@ class TestSultansPalaceAction:
         player_state.hand[Card.NO_MOVE] = 1
 
         # Give player specific amounts of goods
-        player_state.cart_contents = Counter({
-            Good.RED: 3,
-            Good.GREEN: 2,
-            Good.YELLOW: 3,
-            Good.BLUE: 2,
-        })
+        player_state.cart_contents = Counter(
+            {
+                Good.RED: 3,
+                Good.GREEN: 2,
+                Good.YELLOW: 3,
+                Good.BLUE: 2,
+            }
+        )
         player_state.cart_max = 10
 
         move_player_to_tile(game, Player.RED, Tile.SULTANS_PALACE)
@@ -565,10 +544,7 @@ class TestPostOfficeAction:
         initial_lira = player_state.lira
 
         # Get what's available at position 0
-        assert isinstance(
-            po_state := game.tile_states[Tile.POST_OFFICE],
-            PostOfficeTileState
-        )
+        assert isinstance(po_state := game.tile_states[Tile.POST_OFFICE], PostOfficeTileState)
         expected_goods, expected_lira = po_state.available()
 
         game.take_action(GenericTileAction())
@@ -588,10 +564,7 @@ class TestCaravansaryAction:
         player_state.hand[Card.FIVE_LIRA] = 2  # Have extra to discard
 
         # Set up discard pile with cards we'll draw
-        assert isinstance(
-            cara_state := game.tile_states[Tile.CARAVANSARY],
-            CaravansaryTileState
-        )
+        assert isinstance(cara_state := game.tile_states[Tile.CARAVANSARY], CaravansaryTileState)
         cara_state.discard_pile = [Card.EXTRA_MOVE, Card.RETURN_ASSISTANT]
         cara_state.awaiting_discard = False
 
@@ -603,10 +576,9 @@ class TestCaravansaryAction:
         initial_five_lira = player_state.hand[Card.FIVE_LIRA]
 
         # Draw 2 from discard, discard FIVE_LIRA
-        game.take_action(CaravansaryAction(
-            gains=(CaravansaryAction.DISCARD, CaravansaryAction.DISCARD),
-            cost=Card.FIVE_LIRA
-        ))
+        game.take_action(
+            CaravansaryAction(gains=(CaravansaryAction.DISCARD, CaravansaryAction.DISCARD), cost=Card.FIVE_LIRA)
+        )
 
         # Should have gained the top 2 cards from discard
         assert player_state.hand[Card.EXTRA_MOVE] >= 1
@@ -661,10 +633,7 @@ class TestFountainAction:
 
         # Send family member to fountain
         fountain_loc = game.location_map.inverse[Tile.FOUNTAIN]
-        game.take_action(PoliceStationAction(
-            location=fountain_loc,
-            action=GenericTileAction()
-        ))
+        game.take_action(PoliceStationAction(location=fountain_loc, action=GenericTileAction()))
 
         # All assistants should be back
         assert player_state.stack_size == 4
@@ -692,11 +661,8 @@ class TestGovernorEncounter:
 
         # Encounter governor, pay 2 lira for FIVE_LIRA card
         from istanbul_game.actions import Pay
-        game.take_action(EncounterGovernor(
-            gain=Card.FIVE_LIRA,
-            cost=Pay(),
-            roll=(3, 4)
-        ))
+
+        game.take_action(EncounterGovernor(gain=Card.FIVE_LIRA, cost=Pay(), roll=(3, 4)))
 
         assert player_state.lira == initial_lira - 2
         assert player_state.hand[Card.FIVE_LIRA] == initial_cards + 1
@@ -719,11 +685,7 @@ class TestGovernorEncounter:
         initial_lira = player_state.lira
 
         # Encounter governor, trade ONE_GOOD for EXTRA_MOVE card
-        game.take_action(EncounterGovernor(
-            gain=Card.EXTRA_MOVE,
-            cost=Card.ONE_GOOD,
-            roll=(3, 4)
-        ))
+        game.take_action(EncounterGovernor(gain=Card.EXTRA_MOVE, cost=Card.ONE_GOOD, roll=(3, 4)))
 
         # Should have traded one card for another
         assert player_state.hand[Card.ONE_GOOD] == initial_one_good - 1
@@ -753,11 +715,8 @@ class TestSmugglerEncounter:
 
         # Encounter smuggler, pay 2 lira for RED good
         from istanbul_game.actions import Pay
-        game.take_action(EncounterSmuggler(
-            gain=Good.RED,
-            cost=Pay(),
-            roll=(3, 4)
-        ))
+
+        game.take_action(EncounterSmuggler(gain=Good.RED, cost=Pay(), roll=(3, 4)))
 
         assert player_state.lira == initial_lira - 2
         assert player_state.cart_contents[Good.RED] == initial_red + 1
@@ -778,11 +737,7 @@ class TestSmugglerEncounter:
         initial_green = player_state.cart_contents[Good.GREEN]
 
         # Trade GREEN for RED
-        game.take_action(EncounterSmuggler(
-            gain=Good.RED,
-            cost=Good.GREEN,
-            roll=(3, 4)
-        ))
+        game.take_action(EncounterSmuggler(gain=Good.RED, cost=Good.GREEN, roll=(3, 4)))
 
         assert player_state.cart_contents[Good.RED] == initial_red + 1
         assert player_state.cart_contents[Good.GREEN] == initial_green - 1
@@ -803,10 +758,7 @@ class TestPoliceStationAction:
 
         # Send family member to fabric warehouse
         target_loc = game.location_map.inverse[Tile.FABRIC_WAREHOUSE]
-        game.take_action(PoliceStationAction(
-            location=target_loc,
-            action=GenericTileAction()
-        ))
+        game.take_action(PoliceStationAction(location=target_loc, action=GenericTileAction()))
 
         # Family member should be at warehouse
         assert player_state.family_location == target_loc
@@ -829,13 +781,11 @@ class TestPoliceStationAction:
 
         # Send family member to post office with double card
         po_loc = game.location_map.inverse[Tile.POST_OFFICE]
-        game.take_action(PoliceStationAction(
-            location=po_loc,
-            action=DoubleCardAction(
-                Card.DOUBLE_PO,
-                (GenericTileAction(), GenericTileAction())
+        game.take_action(
+            PoliceStationAction(
+                location=po_loc, action=DoubleCardAction(Card.DOUBLE_PO, (GenericTileAction(), GenericTileAction()))
             )
-        ))
+        )
 
         # Should have received lira from two post office actions
         assert player_state.lira > initial_lira
@@ -848,12 +798,14 @@ class TestPoliceStationAction:
         player_state.hand[Card.NO_MOVE] = 1
 
         # Give player enough goods for sultan's palace
-        player_state.cart_contents = Counter({
-            Good.RED: 2,
-            Good.GREEN: 2,
-            Good.YELLOW: 2,
-            Good.BLUE: 2,
-        })
+        player_state.cart_contents = Counter(
+            {
+                Good.RED: 2,
+                Good.GREEN: 2,
+                Good.YELLOW: 2,
+                Good.BLUE: 2,
+            }
+        )
         player_state.cart_max = 8
 
         move_player_to_tile(game, Player.RED, Tile.POLICE_STATION)
@@ -864,10 +816,7 @@ class TestPoliceStationAction:
 
         # Send family member to sultan's palace
         payment = Counter({Good.BLUE: 1, Good.RED: 1, Good.GREEN: 1, Good.YELLOW: 2})
-        game.take_action(PoliceStationAction(
-            location=sultan_loc,
-            action=SultansPalaceAction(goods=payment)
-        ))
+        game.take_action(PoliceStationAction(location=sultan_loc, action=SultansPalaceAction(goods=payment)))
 
         assert player_state.rubies == initial_rubies + 1
 
@@ -897,10 +846,7 @@ class TestPoliceStationAction:
         initial_lira = red_player.lira
 
         # Send family member to tile with other player
-        game.take_action(PoliceStationAction(
-            location=target_loc,
-            action=GenericTileAction()
-        ))
+        game.take_action(PoliceStationAction(location=target_loc, action=GenericTileAction()))
 
         # Verify family member arrived
         assert red_player.family_location == target_loc
@@ -917,14 +863,10 @@ class TestPoliceStationAction:
         move_player_to_tile(game, Player.RED, Tile.POLICE_STATION)
         game.take_action(NoMoveCardAction(skip_assistant=False))
 
-        gov_tile = game.location_map[governor_loc]
         initial_lira = red_player.lira
 
         # Send family member to tile with governor
-        game.take_action(PoliceStationAction(
-            location=governor_loc,
-            action=GenericTileAction()
-        ))
+        game.take_action(PoliceStationAction(location=governor_loc, action=GenericTileAction()))
 
         # Verify family member arrived but no interaction occurred
         assert red_player.family_location == governor_loc
@@ -940,14 +882,10 @@ class TestPoliceStationAction:
         move_player_to_tile(game, Player.RED, Tile.POLICE_STATION)
         game.take_action(NoMoveCardAction(skip_assistant=False))
 
-        smug_tile = game.location_map[smuggler_loc]
         initial_goods = sum(red_player.cart_contents.values())
 
         # Send family member to tile with smuggler
-        game.take_action(PoliceStationAction(
-            location=smuggler_loc,
-            action=GenericTileAction()
-        ))
+        game.take_action(PoliceStationAction(location=smuggler_loc, action=GenericTileAction()))
 
         # Verify family member arrived but no interaction occurred
         assert red_player.family_location == smuggler_loc

@@ -3,7 +3,7 @@ import typing
 from collections import Counter
 from functools import partial
 
-from ..constants import Good, Card, Roll, Player, Tile
+from ..constants import Card, Good, Player, Roll, Tile
 from ..lib.utils import ImmutableInvertibleMapping, ImmutableMapping
 
 good_codes: typing.Mapping[str, Good] = ImmutableInvertibleMapping({g.name[0]: g for g in Good})
@@ -26,7 +26,7 @@ def load_good_counter(s: str) -> typing.Counter[Good]:
     result: typing.Counter[Good] = Counter()
     is_digit = [c.isdigit() for c in s]
     idx = 0
-    explicit_count_start: typing.Optional[int] = None
+    explicit_count_start: int | None = None
     while idx < len(s):
         if not is_digit[idx]:
             good = load_good(s[idx])
@@ -43,15 +43,15 @@ def load_good_counter(s: str) -> typing.Counter[Good]:
     return result
 
 
-def action_subtokens(s: str) -> typing.List[str]:
-    return list(filter(None, s.split(' ')))
+def action_subtokens(s: str) -> list[str]:
+    return list(filter(None, s.split(" ")))
 
 
-def phase_subtokens(s: str) -> typing.List[str]:
-    return [t.strip() for t in s.split(';')]
+def phase_subtokens(s: str) -> list[str]:
+    return [t.strip() for t in s.split(";")]
 
 
-def tokens(s: str) -> typing.List[str]:
+def tokens(s: str) -> list[str]:
     result = [[s[0]]]
     last = s[0]
     for c in itertools.islice(s, 1, len(s)):
@@ -61,7 +61,7 @@ def tokens(s: str) -> typing.List[str]:
             result[-1].append(c)
         last = c
 
-    return [''.join(cs).upper() for cs in result]
+    return ["".join(cs).upper() for cs in result]
 
 
 def tokens_match(ts: typing.Iterable[str], canonical: typing.Iterable[str]) -> bool:
@@ -78,38 +78,40 @@ def tokens_match(ts: typing.Iterable[str], canonical: typing.Iterable[str]) -> b
     return False
 
 
-card_codes: typing.Mapping[str, Card] = ImmutableMapping({
-    'OneGood': Card.ONE_GOOD,
-    '1Good': Card.ONE_GOOD,
-    '5Lira': Card.FIVE_LIRA,
-    'FiveLira': Card.FIVE_LIRA,
-    'ExtraMove': Card.EXTRA_MOVE,
-    'Move34': Card.EXTRA_MOVE,
-    'NoMove': Card.NO_MOVE,
-    'Move0': Card.NO_MOVE,
-    'StayPut': Card.NO_MOVE,
-    'ReturnAssistant': Card.RETURN_ASSISTANT,
-    'ArrestFamily': Card.ARREST_FAMILY,
-    'SellAny': Card.SELL_ANY,
-    'SmallMarket': Card.SELL_ANY,
-    '2xSultan': Card.DOUBLE_SULTAN,
-    'DoubleSultan': Card.DOUBLE_SULTAN,
-    '2xPostOffice': Card.DOUBLE_PO,
-    'DoublePostOffice': Card.DOUBLE_PO,
-    '2xGemstoneDealer': Card.DOUBLE_DEALER,
-    'DoubleGemstoneDealer': Card.DOUBLE_DEALER,
-})
+card_codes: typing.Mapping[str, Card] = ImmutableMapping(
+    {
+        "OneGood": Card.ONE_GOOD,
+        "1Good": Card.ONE_GOOD,
+        "5Lira": Card.FIVE_LIRA,
+        "FiveLira": Card.FIVE_LIRA,
+        "ExtraMove": Card.EXTRA_MOVE,
+        "Move34": Card.EXTRA_MOVE,
+        "NoMove": Card.NO_MOVE,
+        "Move0": Card.NO_MOVE,
+        "StayPut": Card.NO_MOVE,
+        "ReturnAssistant": Card.RETURN_ASSISTANT,
+        "ArrestFamily": Card.ARREST_FAMILY,
+        "SellAny": Card.SELL_ANY,
+        "SmallMarket": Card.SELL_ANY,
+        "2xSultan": Card.DOUBLE_SULTAN,
+        "DoubleSultan": Card.DOUBLE_SULTAN,
+        "2xPostOffice": Card.DOUBLE_PO,
+        "DoublePostOffice": Card.DOUBLE_PO,
+        "2xGemstoneDealer": Card.DOUBLE_DEALER,
+        "DoubleGemstoneDealer": Card.DOUBLE_DEALER,
+    }
+)
 
-card_tokens: typing.Mapping[typing.Tuple[str, ...], Card] = {tuple(tokens(k)): v for k, v in card_codes.items()}
-tile_tokens: typing.Mapping[typing.Tuple[str, ...], Tile] = {tuple(t.name.split('_')): t for t in Tile}
+card_tokens: typing.Mapping[tuple[str, ...], Card] = {tuple(tokens(k)): v for k, v in card_codes.items()}
+tile_tokens: typing.Mapping[tuple[str, ...], Tile] = {tuple(t.name.split("_")): t for t in Tile}
 
 
-T = typing.TypeVar('T')
+T = typing.TypeVar("T")
 
 
-def _load(mapping: typing.Mapping[typing.Tuple[str, ...], T], s: str) -> typing.Set[T]:
+def _load(mapping: typing.Mapping[tuple[str, ...], T], s: str) -> set[T]:
     ts = tokens(s)
-    result: typing.Set[T] = set()
+    result: set[T] = set()
     for canon_ts, v in mapping.items():
         if v in result:
             continue
@@ -119,8 +121,8 @@ def _load(mapping: typing.Mapping[typing.Tuple[str, ...], T], s: str) -> typing.
     return result
 
 
-load_card: typing.Callable[[str], typing.Set[Card]] = partial(_load, card_tokens)
-load_tile: typing.Callable[[str], typing.Set[Tile]] = partial(_load, tile_tokens)
+load_card: typing.Callable[[str], set[Card]] = partial(_load, card_tokens)
+load_tile: typing.Callable[[str], set[Tile]] = partial(_load, tile_tokens)
 
 
 def load_exact_card(s: str) -> Card:
@@ -131,5 +133,5 @@ def load_exact_card(s: str) -> Card:
 
 
 def load_roll(s: str) -> Roll:
-    first, second = s.split('+')
+    first, second = s.split("+")
     return typing.cast(Roll, (int(first), int(second)))

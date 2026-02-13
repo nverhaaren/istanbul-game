@@ -1,9 +1,11 @@
-from typing import Final, Union, Literal, Tuple, Counter, Iterable
+from collections import Counter
+from collections.abc import Iterable
+from typing import Final, Literal
 
-from .constants import Location, Card, Good, Roll
+from .constants import Card, Good, Location, Roll
 
 
-class PlayerAction(object):
+class PlayerAction:
     pass
 
 
@@ -22,22 +24,22 @@ class Pay(PlayerAction):
 
 
 class ChooseReward(PlayerAction):
-    LIRA: Final = 'Lira'
-    _RewardChoice = Union[Card, Literal['Lira']]
+    LIRA: Final = "Lira"
+    _RewardChoice = Card | Literal["Lira"]
 
     def __init__(self, choice: _RewardChoice):
         self.choice: Final = choice
 
 
 class EncounterSmuggler(PlayerAction):
-    def __init__(self, gain: Good, cost: Union[Good, Pay], roll: Roll):
+    def __init__(self, gain: Good, cost: Good | Pay, roll: Roll):
         self.gain: Final = gain
         self.cost: Final = cost
         self.roll: Final = roll
 
 
 class EncounterGovernor(PlayerAction):
-    def __init__(self, gain: Card, cost: Union[Card, Pay], roll: Roll):
+    def __init__(self, gain: Card, cost: Card | Pay, roll: Roll):
         self.gain: Final = gain
         self.cost: Final = cost
         self.roll: Final = roll
@@ -61,14 +63,15 @@ class GreenTileAction(PlayerAction):
 
     It both takes the warehouse action and allows an additional good.
     """
+
     def __init__(self, good: Good):
         self.good: Final = good
 
 
 class RedTileAction(PlayerAction):
-    TO_FOUR: Final = 'change a die to four'
-    REROLL: Final = 'reroll'
-    _Method = Literal['change a die to four', 'reroll']
+    TO_FOUR: Final = "change a die to four"
+    REROLL: Final = "reroll"
+    _Method = Literal["change a die to four", "reroll"]
 
     def __init__(self, initial_roll: Roll, final_roll: Roll, method: _Method):
         self.initial_roll: Final = initial_roll
@@ -82,10 +85,10 @@ class YellowTileAction(PlayerAction):
 
 
 class CaravansaryAction(PlaceTileAction):
-    DISCARD: Final = 'top of discard pile'
-    _Gain = Union[Card, Literal['top of discard pile']]
+    DISCARD: Final = "top of discard pile"
+    _Gain = Card | Literal["top of discard pile"]
 
-    def __init__(self, gains: Tuple[_Gain, _Gain], cost: Card):
+    def __init__(self, gains: tuple[_Gain, _Gain], cost: Card):
         self.gains: Final = gains
         self.cost: Final = cost
 
@@ -93,13 +96,13 @@ class CaravansaryAction(PlaceTileAction):
 class BlackMarketAction(PlaceTileAction):
     _Choices = Literal[Good.RED, Good.YELLOW, Good.GREEN]
 
-    def __init__(self, good: _Choices, roll: Union[Roll, RedTileAction]):
+    def __init__(self, good: _Choices, roll: Roll | RedTileAction):
         self.good: Final = good
         self.roll: Final = roll
 
 
 class TeaHouseAction(PlaceTileAction):
-    def __init__(self, call: int, roll: Union[Roll, RedTileAction]):
+    def __init__(self, call: int, roll: Roll | RedTileAction):
         self.call: Final = call
         self.roll: Final = roll
 
@@ -111,7 +114,7 @@ class MarketAction(PlaceTileAction):
 
 
 class DoubleCardAction(PlayerAction):
-    def __init__(self, card: Card, actions: Tuple[PlaceTileAction, PlaceTileAction]):
+    def __init__(self, card: Card, actions: tuple[PlaceTileAction, PlaceTileAction]):
         self.card: Final = card
         self.actions: Final = actions
 
@@ -122,8 +125,9 @@ class SellAnyCardAction(PlayerAction):
 
 
 class PoliceStationAction(PlaceTileAction):
-    def __init__(self, location: Location,
-                 action: Union[PlaceTileAction, GreenTileAction, DoubleCardAction, SellAnyCardAction]):
+    def __init__(
+        self, location: Location, action: PlaceTileAction | GreenTileAction | DoubleCardAction | SellAnyCardAction
+    ):
         # Do a manual type check
         assert isinstance(action, (PlaceTileAction, GreenTileAction, DoubleCardAction, SellAnyCardAction))
         self.location: Final = location
