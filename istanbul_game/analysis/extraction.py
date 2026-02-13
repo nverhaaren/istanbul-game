@@ -1,10 +1,11 @@
 import itertools
 import typing
+from typing import Any, Set, Tuple, Iterator
 
 from ..lib.utils import extract_from_dict
 
 
-def diff_dicts(d1, d2):
+def diff_dicts(d1: Any, d2: Any) -> Tuple[Any, Set[str]]:
     if not isinstance(d1, dict) and not isinstance(d2, dict):
         return d2, set()
     removed_keys = set(d1) - set(d2)
@@ -17,7 +18,7 @@ def diff_dicts(d1, d2):
     return updates, removed_keys
 
 
-def extract_player_state_series(states: typing.Iterator[dict], player: str, key: str):
+def extract_player_state_series(states: typing.Iterator[dict], player: str, key: str) -> Iterator[dict]:
     initial = next(states)
     player_count: int = initial['immutable']['player_count']
     idx_of_player = initial['immutable']['players'].index(player)

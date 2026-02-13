@@ -13,7 +13,7 @@ class MailSlot(NamedTuple):
 
 
 class TileState(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self.governor: bool = False
         self.smuggler: bool = False
         self.assistants: Set[Player] = set()
@@ -30,7 +30,7 @@ class MosqueTileState(TileState):
         super(MosqueTileState, self).__init__()
         self.available_tiles: Dict[Good, int] = {good: 2 for good in goods}
 
-    def take_action(self, good: Good):
+    def take_action(self, good: Good) -> None:
         assert good in self.available_tiles, 'mosque does not have {} tile'.format(good)
         if self.available_tiles[good] < 5:
             self.available_tiles[good] += 1
@@ -44,7 +44,7 @@ class PostOfficeTileState(TileState):
         MailSlot(Good.BLUE, Good.YELLOW, 2, 1),
     )
 
-    def __init__(self):
+    def __init__(self) -> None:
         super(PostOfficeTileState, self).__init__()
         self.position: int = 0
 
@@ -68,12 +68,12 @@ class PostOfficeTileState(TileState):
 
 
 class CaravansaryTileState(TileState):
-    def __init__(self):
+    def __init__(self) -> None:
         super(CaravansaryTileState, self).__init__()
         self.discard_pile: List[Card] = []
         self.awaiting_discard: bool = False
 
-    def discard_onto(self, card: Card):
+    def discard_onto(self, card: Card) -> None:
         self.discard_pile.append(card)
         self.awaiting_discard = False
 
@@ -94,7 +94,7 @@ class WainwrightTileState(TileState):
         super(WainwrightTileState, self).__init__()
         self.extensions = extensions
 
-    def take_action(self):
+    def take_action(self) -> None:
         self.extensions -= 1
         assert self.extensions >= 0
 
@@ -107,7 +107,7 @@ class MarketTileState(TileState):
         self.expecting_demand: bool = True
         self.demand: Optional[Counter[Good]] = None
 
-    def set_demand(self, demand: Counter[Good]):
+    def set_demand(self, demand: Counter[Good]) -> None:
         assert sum(demand.values()) == 5
         self.demand = demand
         self.expecting_demand = False
@@ -145,7 +145,7 @@ class SultansPalaceTileState(TileState):
             result[self.GOOD_CYCLE[i % 5]] += 1
         return result
 
-    def take_action(self, payment: Counter[Good]):
+    def take_action(self, payment: Counter[Good]) -> None:
         required = self.required()
         assert required is not None
         payment = payment.copy()
@@ -160,14 +160,14 @@ class GemstoneDealerTileState(TileState):
         super(GemstoneDealerTileState, self).__init__()
         self.cost: Optional[int] = initial_cost
 
-    def take_action(self):
+    def take_action(self) -> None:
         assert self.cost is not None
         self.cost += 1
         if self.cost > 24:
             self.cost = None
 
 
-def initial_tile_state(tile: Tile, player_count: int):
+def initial_tile_state(tile: Tile, player_count: int) -> TileState:
     assert 2 <= player_count <= 5
     if tile in {Tile.FABRIC_WAREHOUSE, Tile.FRUIT_WAREHOUSE, Tile.POLICE_STATION, Tile.FOUNTAIN, Tile.SPICE_WAREHOUSE,
                 Tile.BLACK_MARKET, Tile.TEA_HOUSE}:
@@ -199,3 +199,5 @@ def initial_tile_state(tile: Tile, player_count: int):
         else:
             initial_cost = 12
         return GemstoneDealerTileState(initial_cost)
+
+    raise ValueError(f'Unknown tile: {tile}')
