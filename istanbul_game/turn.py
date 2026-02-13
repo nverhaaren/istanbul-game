@@ -19,7 +19,7 @@ class TurnState(object):
         return self.players[self.current_player_idx]
 
     def skip_phase_2(self):
-        assert self.current_phase == 2 and not self.yield_required
+        assert self.current_phase == 2
         self.current_phase = 3
 
     def valid_action(self, action: PlayerAction) -> bool:

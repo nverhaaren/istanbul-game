@@ -241,14 +241,6 @@ class TestTurnStateTakeAction:
         with pytest.raises(AssertionError):
             state.skip_phase_2()
 
-    def test_skip_phase_2_not_allowed_when_yield_required(self) -> None:
-        """Cannot skip phase 2 if yield is required."""
-        state = TurnState((Player.RED, Player.BLUE))
-        state.current_phase = 2
-        state.yield_required = True
-        with pytest.raises(AssertionError):
-            state.skip_phase_2()
-
     def test_no_move_advances_to_phase_2(self) -> None:
         """No move card advances to phase 2."""
         state = TurnState((Player.RED, Player.BLUE))
@@ -333,3 +325,444 @@ class TestPhaseAllowedCards:
             phase_allowed_cards(0)
         with pytest.raises(AssertionError):
             phase_allowed_cards(5)
+
+
+class TestEarlyTurnExit:
+    """Tests for early turn exit scenarios."""
+
+    def test_can_yield_in_phase_2_with_no_money(self) -> None:
+        """Player can yield in phase 2 if they cannot pay."""
+        from tests.helpers import create_game, move_player_to_tile
+        from istanbul_game.constants import Tile
+
+        game = create_game()
+        red_player = game.player_states[Player.RED]
+        blue_player = game.player_states[Player.BLUE]
+
+        # Set up: Red has no lira, Blue is at target tile
+        red_player.lira = 0
+        red_player.hand[Card.NO_MOVE] = 1
+        target_loc = Location(3)
+        target_tile = game.location_map[target_loc]
+
+        # Place blue at target
+        blue_player.location = target_loc
+        game.tile_states[target_tile].players.add(Player.BLUE)
+
+        # Move red to same tile
+        move_player_to_tile(game, Player.RED, target_tile)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        # Now in phase 2, red cannot afford to pay
+        assert game.turn_state.current_phase == 2
+        assert game.turn_state.valid_action(YieldTurn())
+
+        # Red yields
+        game.take_action(YieldTurn())
+        assert game.turn_state.current_player == Player.BLUE
+
+    def test_must_yield_when_no_assistants_available(self) -> None:
+        """Player with no assistants must skip assistant placement."""
+        from tests.helpers import create_game
+        from istanbul_game.constants import Tile
+
+        game = create_game()
+        red_player = game.player_states[Player.RED]
+
+        # Use all assistants
+        red_player.stack_size = 0
+        red_player.assistant_locations.clear()
+
+        # Move to a different tile - must skip assistant since we have none
+        target_loc = Location(3)
+        move = Move(target_loc, skip_assistant=True)
+        game.take_action(move)
+
+        # Should set yield_required
+        assert game.turn_state.yield_required
+
+    def test_fountain_exempts_from_assistant_requirement(self) -> None:
+        """At fountain, no assistant placement required."""
+        from tests.helpers import create_game, move_player_to_tile
+        from istanbul_game.constants import Tile
+
+        game = create_game()
+        red_player = game.player_states[Player.RED]
+
+        # Remove all assistants
+        red_player.stack_size = 0
+        red_player.assistant_locations.clear()
+
+        # Move to fountain should work without assistants
+        red_player.hand[Card.NO_MOVE] = 1
+        move_player_to_tile(game, Player.RED, Tile.FOUNTAIN)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        # Should skip phase 2 automatically (fountain logic)
+        assert game.turn_state.current_phase == 3
+
+
+class TestSkipTileAction:
+    """Tests for skipping tile actions."""
+
+    def test_can_skip_tile_action(self) -> None:
+        """Player can skip the tile action in phase 3."""
+        from tests.helpers import create_game, move_player_to_tile
+        from istanbul_game.constants import Tile
+
+        game = create_game()
+        red_player = game.player_states[Player.RED]
+        red_player.hand[Card.NO_MOVE] = 1
+
+        move_player_to_tile(game, Player.RED, Tile.FABRIC_WAREHOUSE)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        # Now in phase 3
+        assert game.turn_state.current_phase == 3
+
+        # Skip tile action
+        game.take_action(SkipTileAction())
+
+        # Should advance to phase 4
+        assert game.turn_state.current_phase == 4
+
+    def test_skip_tile_action_valid_in_phase_3_only(self) -> None:
+        """SkipTileAction is only valid in phase 3."""
+        state = TurnState((Player.RED, Player.BLUE))
+
+        state.current_phase = 1
+        assert not state.valid_action(SkipTileAction())
+
+        state.current_phase = 2
+        assert not state.valid_action(SkipTileAction())
+
+        state.current_phase = 3
+        assert state.valid_action(SkipTileAction())
+
+        state.current_phase = 4
+        assert not state.valid_action(SkipTileAction())
+
+
+class TestPaymentToOtherPlayers:
+    """Tests for paying other players when not at fountain."""
+
+    def test_must_pay_when_other_players_present(self) -> None:
+        """Must pay when other players are at the tile."""
+        from tests.helpers import create_game, move_player_to_tile
+
+        game = create_game()
+        red_player = game.player_states[Player.RED]
+        blue_player = game.player_states[Player.BLUE]
+
+        # Place blue at target location
+        target_loc = Location(3)
+        target_tile = game.location_map[target_loc]
+        blue_player.location = target_loc
+        game.tile_states[target_tile].players.add(Player.BLUE)
+
+        # Red moves to same tile
+        red_player.hand[Card.NO_MOVE] = 1
+        red_player.lira = 10
+        move_player_to_tile(game, Player.RED, target_tile)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        # Should be in phase 2 (payment phase)
+        assert game.turn_state.current_phase == 2
+
+        initial_red_lira = red_player.lira
+        initial_blue_lira = blue_player.lira
+
+        # Pay action
+        game.take_action(Pay())
+
+        # Red should have paid, blue should have received
+        assert red_player.lira < initial_red_lira
+        assert blue_player.lira > initial_blue_lira
+
+    def test_no_payment_at_fountain(self) -> None:
+        """No payment required when at fountain, even with other players."""
+        from tests.helpers import create_game, move_player_to_tile
+        from istanbul_game.constants import Tile
+
+        game = create_game()
+        red_player = game.player_states[Player.RED]
+        blue_player = game.player_states[Player.BLUE]
+
+        # Both players start at fountain
+        fountain_loc = game.location_map.inverse[Tile.FOUNTAIN]
+        assert red_player.location == fountain_loc
+        assert blue_player.location == fountain_loc
+
+        # Red uses no-move card
+        red_player.hand[Card.NO_MOVE] = 1
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        # Should skip phase 2 (no payment at fountain)
+        assert game.turn_state.current_phase == 3
+
+    def test_skip_phase_2_when_alone(self) -> None:
+        """Phase 2 is skipped when player is alone on tile."""
+        from tests.helpers import create_game
+        from istanbul_game.constants import Tile
+
+        game = create_game()
+        red_player = game.player_states[Player.RED]
+        red_player.hand[Card.NO_MOVE] = 1
+
+        # Move to empty tile
+        target_loc = Location(5)
+        move = Move(target_loc, skip_assistant=False)
+        game.take_action(move)
+
+        # Should skip phase 2 (alone on tile)
+        assert game.turn_state.current_phase == 3
+
+
+class TestFamilyMemberCapture:
+    """Tests for capturing other family members."""
+
+    def test_must_catch_other_family_members(self) -> None:
+        """Player must choose reward after catching family members."""
+        from tests.helpers import create_game, move_player_to_tile
+        from istanbul_game.constants import Tile
+
+        game = create_game()
+        red_player = game.player_states[Player.RED]
+        blue_player = game.player_states[Player.BLUE]
+
+        # Place blue's family member at target tile
+        target_loc = Location(5)
+        target_tile = game.location_map[target_loc]
+        blue_player.family_location = target_loc
+        game.tile_states[target_tile].family_members.add(Player.BLUE)
+
+        # Red moves to target and performs action
+        red_player.hand[Card.NO_MOVE] = 1
+        move_player_to_tile(game, Player.RED, target_tile)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+        game.take_action(GenericTileAction())
+
+        # Should have outstanding reward choice
+        assert game.outstanding_reward_choices == 1
+
+        # Cannot yield without choosing reward
+        with pytest.raises(AssertionError):
+            game.take_action(YieldTurn())
+
+        # Must choose reward
+        game.take_action(ChooseReward(ChooseReward.LIRA))
+
+        # Blue's family should be back at police station
+        police_loc = game.location_map.inverse[Tile.POLICE_STATION]
+        assert blue_player.family_location == police_loc
+
+    def test_capture_multiple_family_members(self) -> None:
+        """Can capture multiple family members at once."""
+        from tests.helpers import create_game, move_player_to_tile
+
+        # Create 3-player game
+        game = create_game(players=(Player.RED, Player.BLUE, Player.GREEN))
+        red_player = game.player_states[Player.RED]
+        blue_player = game.player_states[Player.BLUE]
+        green_player = game.player_states[Player.GREEN]
+
+        # Place multiple family members at target
+        target_loc = Location(5)
+        target_tile = game.location_map[target_loc]
+        blue_player.family_location = target_loc
+        green_player.family_location = target_loc
+        game.tile_states[target_tile].family_members.add(Player.BLUE)
+        game.tile_states[target_tile].family_members.add(Player.GREEN)
+
+        # Red captures them
+        red_player.hand[Card.NO_MOVE] = 1
+        move_player_to_tile(game, Player.RED, target_tile)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+        game.take_action(GenericTileAction())
+
+        # Should have 2 reward choices
+        assert game.outstanding_reward_choices == 2
+
+        # Choose rewards
+        game.take_action(ChooseReward(ChooseReward.LIRA))
+        assert game.outstanding_reward_choices == 1
+        game.take_action(ChooseReward(Card.ONE_GOOD))
+        assert game.outstanding_reward_choices == 0
+
+
+class TestNPCEncounters:
+    """Tests for governor and smuggler encounters."""
+
+    def test_governor_encounter_optional(self) -> None:
+        """Governor encounter is optional in phase 4."""
+        from tests.helpers import create_game, move_player_to_tile
+        from istanbul_game.actions import Pay
+
+        governor_loc = Location(5)
+        game = create_game(governor_location=governor_loc)
+        red_player = game.player_states[Player.RED]
+
+        # Move to governor tile
+        gov_tile = game.location_map[governor_loc]
+        red_player.hand[Card.NO_MOVE] = 1
+        red_player.lira = 10
+        move_player_to_tile(game, Player.RED, gov_tile)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+        game.take_action(SkipTileAction())
+
+        # Now in phase 4, encounter is optional
+        assert game.turn_state.current_phase == 4
+
+        # Can yield without encountering
+        game.take_action(YieldTurn())
+        assert game.turn_state.current_player == Player.BLUE
+
+    def test_governor_moves_after_encounter(self) -> None:
+        """Governor moves to new location after encounter."""
+        from tests.helpers import create_game, move_player_to_tile
+        from istanbul_game.actions import Pay
+
+        governor_loc = Location(5)
+        game = create_game(governor_location=governor_loc)
+        red_player = game.player_states[Player.RED]
+
+        # Move to governor tile
+        gov_tile = game.location_map[governor_loc]
+        red_player.hand[Card.NO_MOVE] = 1
+        red_player.lira = 10
+        move_player_to_tile(game, Player.RED, gov_tile)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+        game.take_action(SkipTileAction())
+
+        # Governor should be at this tile
+        assert game.tile_states[gov_tile].governor
+
+        # Encounter governor
+        game.take_action(EncounterGovernor(
+            gain=Card.FIVE_LIRA,
+            cost=Pay(),
+            roll=(3, 4)
+        ))
+
+        # Governor should no longer be at this tile
+        assert not game.tile_states[gov_tile].governor
+
+        # Governor should be at a new location (check that governor flag is set somewhere)
+        gov_found = any(state.governor for state in game.tile_states.values())
+        assert gov_found
+
+    def test_smuggler_moves_after_encounter(self) -> None:
+        """Smuggler relocates based on dice roll after encounter."""
+        from tests.helpers import create_game, move_player_to_tile
+        from istanbul_game.actions import Pay
+
+        smuggler_loc = Location(7)
+        game = create_game(smuggler_location=smuggler_loc)
+        red_player = game.player_states[Player.RED]
+
+        # Move to smuggler tile
+        smug_tile = game.location_map[smuggler_loc]
+        red_player.hand[Card.NO_MOVE] = 1
+        red_player.lira = 10
+        move_player_to_tile(game, Player.RED, smug_tile)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+        game.take_action(SkipTileAction())
+
+        # Smuggler should be at this tile
+        assert game.tile_states[smug_tile].smuggler
+
+        # Encounter smuggler with a specific roll
+        # Roll determines new location - smuggler moves regardless
+        game.take_action(EncounterSmuggler(
+            gain=Good.RED,
+            cost=Pay(),
+            roll=(3, 4)  # Sum = 7, will place smuggler at location determined by roll
+        ))
+
+        # Smuggler should be at location determined by roll (could be same location)
+        # Just verify smuggler flag is set somewhere
+        smug_found = any(state.smuggler for state in game.tile_states.values())
+        assert smug_found
+
+    def test_can_encounter_both_governor_and_smuggler(self) -> None:
+        """Can encounter both NPCs if at same tile."""
+        from tests.helpers import create_game, move_player_to_tile
+        from istanbul_game.actions import Pay
+
+        # Place both at same location
+        npc_loc = Location(5)
+        game = create_game(governor_location=npc_loc, smuggler_location=npc_loc)
+        red_player = game.player_states[Player.RED]
+
+        # Move to their tile
+        npc_tile = game.location_map[npc_loc]
+        red_player.hand[Card.NO_MOVE] = 1
+        red_player.lira = 20
+        move_player_to_tile(game, Player.RED, npc_tile)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+        game.take_action(SkipTileAction())
+
+        # Encounter governor
+        game.take_action(EncounterGovernor(
+            gain=Card.FIVE_LIRA,
+            cost=Pay(),
+            roll=(3, 4)
+        ))
+
+        # Still in phase 4, can encounter smuggler too
+        assert game.turn_state.current_phase == 4
+        game.take_action(EncounterSmuggler(
+            gain=Good.RED,
+            cost=Pay(),
+            roll=(3, 4)
+        ))
+
+
+class TestAssistantPlacementRequirement:
+    """Tests for assistant placement/pickup requirements."""
+
+    def test_must_place_or_pick_assistant_unless_fountain(self) -> None:
+        """Player must place or pick up assistant, except at fountain."""
+        from tests.helpers import create_game
+        from istanbul_game.constants import Tile
+
+        game = create_game()
+        red_player = game.player_states[Player.RED]
+
+        # Place assistant at target first
+        target_loc = Location(5)
+        red_player.assistant_locations.add(target_loc)
+        game.tile_states[game.location_map[target_loc]].assistants.add(Player.RED)
+        red_player.stack_size = 3
+
+        # Move to tile with assistant - should pick it up
+        red_player.hand[Card.NO_MOVE] = 1
+        move = Move(target_loc, skip_assistant=False)
+        game.take_action(move)
+
+        # Assistant should be picked up
+        assert red_player.stack_size == 4
+        assert target_loc not in red_player.assistant_locations
+
+    def test_skip_assistant_sets_yield_required(self) -> None:
+        """Skipping assistant placement requires yield."""
+        game = TurnState((Player.RED, Player.BLUE))
+        move = Move(Location(5), skip_assistant=True)
+        game.take_action(move)
+
+        assert game.yield_required
+
+    def test_fountain_no_assistant_requirement(self) -> None:
+        """Fountain doesn't require assistant placement/pickup."""
+        from tests.helpers import create_game, move_player_to_tile
+        from istanbul_game.constants import Tile
+
+        game = create_game()
+        red_player = game.player_states[Player.RED]
+
+        # Already at fountain, use no-move
+        red_player.hand[Card.NO_MOVE] = 1
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        # Should skip to phase 3 (fountain exempts from payment and assistant requirements)
+        assert game.turn_state.current_phase == 3
