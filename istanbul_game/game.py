@@ -33,10 +33,8 @@ class GameState(object):
 
         self.tile_states: Dict[Tile, TileState] = {tile: initial_tile_state(tile, self.player_count)
                                                    for loc, tile in self.location_map.items()}
-        assert isinstance(small_market := self.tile_states[Tile.SMALL_MARKET], MarketTileState)
-        small_market.set_demand(small_demand)
-        assert isinstance(large_market := self.tile_states[Tile.LARGE_MARKET], MarketTileState)
-        large_market.set_demand(large_demand)
+        self.get_market_state(Tile.SMALL_MARKET).set_demand(small_demand)
+        self.get_market_state(Tile.LARGE_MARKET).set_demand(large_demand)
         self.tile_states[Tile.POLICE_STATION].family_members |= set(self.players)
         self.tile_states[Tile.FOUNTAIN].players |= set(self.players)
         self.tile_states[self.location_map[governor_location]].governor = True
@@ -90,6 +88,51 @@ class GameState(object):
             self.player_states[self.turn_state.players[self.turn_state.current_player_idx]].location
         ]]
 
+    # Typed accessors for specific tile states
+    @property
+    def post_office_state(self) -> PostOfficeTileState:
+        state = self.tile_states[Tile.POST_OFFICE]
+        assert isinstance(state, PostOfficeTileState)
+        return state
+
+    @property
+    def caravansary_state(self) -> CaravansaryTileState:
+        state = self.tile_states[Tile.CARAVANSARY]
+        assert isinstance(state, CaravansaryTileState)
+        return state
+
+    @property
+    def wainwright_state(self) -> WainwrightTileState:
+        state = self.tile_states[Tile.WAINWRIGHT]
+        assert isinstance(state, WainwrightTileState)
+        return state
+
+    @property
+    def gemstone_dealer_state(self) -> GemstoneDealerTileState:
+        state = self.tile_states[Tile.GEMSTONE_DEALER]
+        assert isinstance(state, GemstoneDealerTileState)
+        return state
+
+    @property
+    def sultans_palace_state(self) -> SultansPalaceTileState:
+        state = self.tile_states[Tile.SULTANS_PALACE]
+        assert isinstance(state, SultansPalaceTileState)
+        return state
+
+    def get_market_state(self, tile: Tile) -> MarketTileState:
+        """Get typed market state for SMALL_MARKET or LARGE_MARKET."""
+        assert tile in (Tile.SMALL_MARKET, Tile.LARGE_MARKET)
+        state = self.tile_states[tile]
+        assert isinstance(state, MarketTileState)
+        return state
+
+    def get_mosque_state(self, tile: Tile) -> MosqueTileState:
+        """Get typed mosque state for GREAT_MOSQUE or SMALL_MOSQUE."""
+        assert tile in (Tile.GREAT_MOSQUE, Tile.SMALL_MOSQUE)
+        state = self.tile_states[tile]
+        assert isinstance(state, MosqueTileState)
+        return state
+
     def _check_completed(self):
         if self.turn_state.current_player != self.players[-1]:
             return False
@@ -114,8 +157,7 @@ class GameState(object):
         hand = self.player_states[self.turn_state.current_player].hand
         assert hand[card] >= 1, '{} does not have {}'.format(self.turn_state.current_player, card)
         hand[card] -= 1
-        assert isinstance(caravansary := self.tile_states[Tile.CARAVANSARY], CaravansaryTileState)
-        caravansary.discard_onto(card)
+        self.caravansary_state.discard_onto(card)
 
     def _spend(self, lira: int):
         player_state = self.player_states[self.turn_state.current_player]
@@ -365,17 +407,25 @@ class GameState(object):
             self._encounter_family_members()
             return
 
-        tile_action_map = {
-            MosqueAction: self._handle_mosque_action,
-            PoliceStationAction: self._handle_police_station_action,
-            FountainAction: self._handle_fountain_action,
-            BlackMarketAction: self._handle_black_market_action,
-            CaravansaryAction: self._handle_caravansary_action,
-            MarketAction: self._handle_market_action,
-            TeaHouseAction: self._handle_tea_house_action,
-            SultansPalaceAction: self._handle_sultans_palace_action,
-        }
-        tile_action_map[action.__class__](action)  # type: ignore[operator]
+        match action:
+            case MosqueAction():
+                self._handle_mosque_action(action)
+            case PoliceStationAction():
+                self._handle_police_station_action(action)
+            case FountainAction():
+                self._handle_fountain_action(action)
+            case BlackMarketAction():
+                self._handle_black_market_action(action)
+            case CaravansaryAction():
+                self._handle_caravansary_action(action)
+            case MarketAction():
+                self._handle_market_action(action)
+            case TeaHouseAction():
+                self._handle_tea_house_action(action)
+            case SultansPalaceAction():
+                self._handle_sultans_palace_action(action)
+            case _:
+                raise AssertionError(f'Unexpected action type: {type(action)}')
         self._encounter_family_members()
 
     def _handle_mosque_action(self, action: MosqueAction):
@@ -404,9 +454,7 @@ class GameState(object):
         player_state = self.player_states[player]
         assert self.location_map[player_state.location] is Tile.POST_OFFICE, 'Not at post office'
 
-        assert isinstance(tile_state := self.tile_states[Tile.POST_OFFICE], PostOfficeTileState)
-
-        goods, lira = tile_state.take_action()
+        goods, lira = self.post_office_state.take_action()
         for good in goods:
             self._acquire(good)
         player_state.lira += lira
@@ -522,21 +570,18 @@ class GameState(object):
 
         tile = self.location_map[player_state.location]
         assert tile is Tile.SULTANS_PALACE
-        assert isinstance(tile_state := self.tile_states[tile], SultansPalaceTileState)
 
         self._trade(action.goods)
-        tile_state.take_action(action.goods)
+        self.sultans_palace_state.take_action(action.goods)
         player_state.rubies += 1
 
     def _handle_wainwright_action(self):
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
-        assert isinstance(tile_state := self.tile_states[Tile.WAINWRIGHT], WainwrightTileState)
-
         assert player_state.cart_max <= 5, 'No room for additional extensions for {}'.format(player)
         self._spend(7)
-        tile_state.take_action()
+        self.wainwright_state.take_action()
         player_state.cart_max += 1
         if player_state.cart_max == 5:
             player_state.rubies += 1
@@ -546,9 +591,9 @@ class GameState(object):
         player_state = self.player_states[player]
         assert self.location_map[player_state.location] is Tile.GEMSTONE_DEALER, 'Not at gemstone dealer'
 
-        assert isinstance(tile_state := self.tile_states[Tile.GEMSTONE_DEALER], GemstoneDealerTileState)
-        assert tile_state.cost is not None, 'No more rubies to buy at the Gemstone Dealer'
-        self._spend(tile_state.cost)
-        tile_state.take_action()
+        dealer_state = self.gemstone_dealer_state
+        assert dealer_state.cost is not None, 'No more rubies to buy at the Gemstone Dealer'
+        self._spend(dealer_state.cost)
+        dealer_state.take_action()
 
         player_state.rubies += 1

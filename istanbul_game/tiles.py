@@ -1,7 +1,15 @@
 import collections
-from typing import Set, Dict, Tuple, List, Optional, Counter
+from typing import Set, Dict, Tuple, List, Optional, Counter, NamedTuple
 
 from .constants import Player, Good, Card, Tile
+
+
+class MailSlot(NamedTuple):
+    """A slot in the post office mail grid."""
+    good_early: Good  # Good received when position has passed this slot
+    good_late: Good   # Good received when position hasn't passed this slot
+    lira_early: int   # Lira received when position has passed this slot
+    lira_late: int    # Lira received when position hasn't passed this slot
 
 
 class TileState(object):
@@ -31,11 +39,9 @@ class MosqueTileState(TileState):
 
 
 class PostOfficeTileState(TileState):
-    MAIL = (
-        (Good.RED, Good.GREEN),
-        (2, 1),
-        (Good.BLUE, Good.YELLOW),
-        (2, 1),
+    MAIL_SLOTS: Tuple[MailSlot, MailSlot] = (
+        MailSlot(Good.RED, Good.GREEN, 2, 1),
+        MailSlot(Good.BLUE, Good.YELLOW, 2, 1),
     )
 
     def __init__(self):
@@ -45,14 +51,14 @@ class PostOfficeTileState(TileState):
     def available(self) -> Tuple[Set[Good], int]:
         goods: Set[Good] = set()
         lira = 0
-        for i in range(len(self.MAIL)):
-            idx = 0 if self.position > i else 1
-            if i % 2 == 0:
-                assert isinstance(good := self.MAIL[i][idx], Good)
-                goods.add(good)
+        for i, slot in enumerate(self.MAIL_SLOTS):
+            # Position > slot index means we've passed it, use "early" values
+            if self.position > i:
+                goods.add(slot.good_early)
+                lira += slot.lira_early
             else:
-                assert isinstance(lira_value := self.MAIL[i][idx], int)
-                lira += lira_value
+                goods.add(slot.good_late)
+                lira += slot.lira_late
         return goods, lira
 
     def take_action(self) -> Tuple[Set[Good], int]:
