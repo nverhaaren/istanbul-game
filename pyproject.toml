@@ -20,6 +20,7 @@ dev = [
     "pytest-cov>=4.1.0",
     "mypy>=1.7.0",
     "pre-commit>=3.6.0",
+    "ruff>=0.4.0",
 ]
 
 [tool.setuptools]
@@ -72,3 +73,29 @@ strict_concatenate = true
 [[tool.mypy.overrides]]
 module = "istanbul_game.dev.*"
 ignore_errors = true
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # Pyflakes
+    "W",    # pycodestyle warnings
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "RUF",  # Ruff-specific rules
+]
+ignore = [
+    "RUF018",  # assignment expressions in assert - established pattern in codebase
+    "SIM108",  # ternary operator - if/else blocks are often more readable
+]
+
+[tool.ruff.lint.per-file-ignores]
+"istanbul_game/dev/*" = ["F401", "F841"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["istanbul_game"]
