@@ -1,11 +1,9 @@
-from collections.abc import MutableMapping
-from typing import Optional, Mapping
-
 import typing
+from collections.abc import Mapping, MutableMapping
+from typing import Optional
 
-
-KT = typing.TypeVar('KT')
-VT = typing.TypeVar('VT')
+KT = typing.TypeVar("KT")
+VT = typing.TypeVar("VT")
 
 
 class ImmutableMapping(Mapping[KT, VT]):
@@ -26,22 +24,24 @@ class ImmutableMapping(Mapping[KT, VT]):
 
 class _InvertibleMapping(Mapping[KT, VT]):
     _mapping: dict[KT, VT]
-    _inverted: Optional['_InvertibleMapping[VT, KT]']
+    _inverted: Optional["_InvertibleMapping[VT, KT]"]
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         self._mapping = dict(*args, **kwargs)
         if len(set(self._mapping.values())) != len(self._mapping):
-            raise TypeError('Mapping is not injective/invertible')
+            raise TypeError("Mapping is not injective/invertible")
         self._inverted = None
 
-    def _bind(self, inverse: '_InvertibleMapping[VT, KT]') -> None:
+    def _bind(self, inverse: "_InvertibleMapping[VT, KT]") -> None:
         self._inverted = inverse
 
     @property
-    def inverse(self) -> '_InvertibleMapping[VT, KT]':
+    def inverse(self) -> "_InvertibleMapping[VT, KT]":
         if self._inverted is None:
             # Cast needed because self.__class__ returns same type params, but swapping k,v inverts them
-            inverted = typing.cast('_InvertibleMapping[VT, KT]', self.__class__((v, k) for k, v in self._mapping.items()))
+            inverted = typing.cast(
+                "_InvertibleMapping[VT, KT]", self.__class__((v, k) for k, v in self._mapping.items())
+            )
             inverted._bind(self)
             self._inverted = inverted
         return self._inverted
@@ -57,15 +57,15 @@ class _InvertibleMapping(Mapping[KT, VT]):
 
 
 class ImmutableInvertibleMapping(_InvertibleMapping[KT, VT]):
-    _hash: typing.Optional[int]
+    _hash: int | None
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
         self._hash = None
 
     @property
-    def inverse(self) -> 'ImmutableInvertibleMapping[VT, KT]':
-        return typing.cast('ImmutableInvertibleMapping[VT, KT]', super().inverse)
+    def inverse(self) -> "ImmutableInvertibleMapping[VT, KT]":
+        return typing.cast("ImmutableInvertibleMapping[VT, KT]", super().inverse)
 
     def __hash__(self) -> int:
         if self._hash is None:
@@ -75,14 +75,13 @@ class ImmutableInvertibleMapping(_InvertibleMapping[KT, VT]):
 
 class InvertibleMapping(_InvertibleMapping[KT, VT], MutableMapping[KT, VT]):
     @property
-    def inverse(self) -> 'InvertibleMapping[VT, KT]':
-        return typing.cast('InvertibleMapping[VT, KT]', super().inverse)
+    def inverse(self) -> "InvertibleMapping[VT, KT]":
+        return typing.cast("InvertibleMapping[VT, KT]", super().inverse)
 
     def __setitem__(self, key: KT, value: VT) -> None:
         inverse = self.inverse
         if value in inverse:
-            raise KeyError('{} is already bound to {}, setting again would destroy invertibility'.format(
-                value, inverse[value]))
+            raise KeyError(f"{value} is already bound to {inverse[value]}, setting again would destroy invertibility")
         self._mapping[key] = value
         inverse._mapping[value] = key
 
@@ -95,9 +94,9 @@ class InvertibleMapping(_InvertibleMapping[KT, VT], MutableMapping[KT, VT]):
 
 def extract_from_dict(key: str, d: dict) -> typing.Any:
     assert key
-    if key[0] == '.':
+    if key[0] == ".":
         key = key[1:]
-    keys = key.split('.')
+    keys = key.split(".")
     result = d
     for k in keys:
         result = result[k]

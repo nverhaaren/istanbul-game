@@ -1,29 +1,29 @@
 """Tests for game module."""
-import pytest
+
 from collections import Counter
 
-from tests.helpers import create_game, move_player_to_tile
+import pytest
 
-from istanbul_game.game import GameState, taxicab_dist
-from istanbul_game.constants import Player, Location, Tile, Good, Card
 from istanbul_game.actions import (
-    Move,
-    Pay,
-    YieldTurn,
-    GenericTileAction,
-    SkipTileAction,
-    ChooseReward,
-    OneGoodCardAction,
-    FiveLiraCardAction,
-    NoMoveCardAction,
-    ExtraMoveCardAction,
-    ReturnAssistantCardAction,
     ArrestFamilyCardAction,
-    YellowTileAction,
+    ChooseReward,
     DoubleCardAction,
+    ExtraMoveCardAction,
+    FiveLiraCardAction,
+    GenericTileAction,
+    Move,
+    NoMoveCardAction,
+    OneGoodCardAction,
+    Pay,
+    ReturnAssistantCardAction,
+    SkipTileAction,
     SultansPalaceAction,
+    YieldTurn,
 )
-from istanbul_game.tiles import GemstoneDealerTileState, PostOfficeTileState, SultansPalaceTileState
+from istanbul_game.constants import Card, Good, Location, Player, Tile
+from istanbul_game.game import GameState, taxicab_dist
+from istanbul_game.tiles import GemstoneDealerTileState, PostOfficeTileState
+from tests.helpers import create_game, move_player_to_tile
 
 
 class TestTaxicabDistance:
@@ -336,9 +336,7 @@ class TestCards:
                 target = Location(i)
                 break
 
-        two_player_game.take_action(
-            ExtraMoveCardAction(Move(target, skip_assistant=False))
-        )
+        two_player_game.take_action(ExtraMoveCardAction(Move(target, skip_assistant=False)))
 
         assert player_state.location == target
         assert player_state.hand[Card.EXTRA_MOVE] == 0
@@ -412,10 +410,9 @@ class TestCards:
         # Second payment: 6 goods (Blue, Red, Green, Yellow, any=Yellow, Blue)
         payment2 = Counter({Good.BLUE: 2, Good.RED: 1, Good.GREEN: 1, Good.YELLOW: 2})
 
-        game.take_action(DoubleCardAction(
-            Card.DOUBLE_SULTAN,
-            (SultansPalaceAction(payment1), SultansPalaceAction(payment2))
-        ))
+        game.take_action(
+            DoubleCardAction(Card.DOUBLE_SULTAN, (SultansPalaceAction(payment1), SultansPalaceAction(payment2)))
+        )
 
         assert player_state.rubies == initial_rubies + 2
         assert player_state.hand[Card.DOUBLE_SULTAN] == 0
@@ -430,17 +427,11 @@ class TestCards:
         move_player_to_tile(game, Player.RED, Tile.POST_OFFICE)
         game.turn_state.current_phase = 3
 
-        assert isinstance(
-            po_state := game.tile_states[Tile.POST_OFFICE],
-            PostOfficeTileState
-        )
+        assert isinstance(po_state := game.tile_states[Tile.POST_OFFICE], PostOfficeTileState)
         initial_position = po_state.position
         initial_lira = player_state.lira
 
-        game.take_action(DoubleCardAction(
-            Card.DOUBLE_PO,
-            (GenericTileAction(), GenericTileAction())
-        ))
+        game.take_action(DoubleCardAction(Card.DOUBLE_PO, (GenericTileAction(), GenericTileAction())))
 
         # Position should advance by 2 (mod 5)
         expected_position = (initial_position + 2) % 5
@@ -459,19 +450,13 @@ class TestCards:
         move_player_to_tile(game, Player.RED, Tile.GEMSTONE_DEALER)
         game.turn_state.current_phase = 3
 
-        assert isinstance(
-            dealer_state := game.tile_states[Tile.GEMSTONE_DEALER],
-            GemstoneDealerTileState
-        )
+        assert isinstance(dealer_state := game.tile_states[Tile.GEMSTONE_DEALER], GemstoneDealerTileState)
         initial_cost = dealer_state.cost
         assert initial_cost is not None
         initial_rubies = player_state.rubies
         initial_lira = player_state.lira
 
-        game.take_action(DoubleCardAction(
-            Card.DOUBLE_DEALER,
-            (GenericTileAction(), GenericTileAction())
-        ))
+        game.take_action(DoubleCardAction(Card.DOUBLE_DEALER, (GenericTileAction(), GenericTileAction())))
 
         assert player_state.rubies == initial_rubies + 2
         # Cost increases by 1 for each purchase
@@ -486,7 +471,6 @@ class TestGenericTileActions:
     def test_warehouse_fills_cart(self, two_player_game: GameState) -> None:
         """Warehouse fills cart with corresponding good."""
         fabric_loc = two_player_game.location_map.inverse[Tile.FABRIC_WAREHOUSE]
-        fountain_loc = two_player_game.location_map.inverse[Tile.FOUNTAIN]
 
         # Need to get to fabric warehouse - use no_move if adjacent
         player_state = two_player_game.current_player_state
@@ -675,9 +659,9 @@ class TestVictoryConditions:
         # RED has 3 total goods (1 red + 2 blue)
         game.player_states[Player.RED].cart_contents = Counter({Good.RED: 1, Good.BLUE: 2})
         # BLUE has 4 total goods (1 of each color)
-        game.player_states[Player.BLUE].cart_contents = Counter({
-            Good.RED: 1, Good.BLUE: 1, Good.GREEN: 1, Good.YELLOW: 1
-        })
+        game.player_states[Player.BLUE].cart_contents = Counter(
+            {Good.RED: 1, Good.BLUE: 1, Good.GREEN: 1, Good.YELLOW: 1}
+        )
 
         ranking = game.ranking()
         players_ranked = list(ranking.keys())

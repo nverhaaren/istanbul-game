@@ -1,20 +1,21 @@
 """Tests for tile state classes."""
-import pytest
+
 from collections import Counter
 
+import pytest
+
+from istanbul_game.constants import Card, Good, Player, Tile
 from istanbul_game.tiles import (
-    TileState,
+    CaravansaryTileState,
+    GemstoneDealerTileState,
     GenericTileState,
+    MarketTileState,
     MosqueTileState,
     PostOfficeTileState,
-    CaravansaryTileState,
-    WainwrightTileState,
-    MarketTileState,
     SultansPalaceTileState,
-    GemstoneDealerTileState,
+    WainwrightTileState,
     initial_tile_state,
 )
-from istanbul_game.constants import Good, Card, Tile, Player
 
 
 class TestTileStateBase:

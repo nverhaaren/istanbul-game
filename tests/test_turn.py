@@ -1,30 +1,31 @@
 """Tests for turn state management."""
-import pytest
+
 from collections import Counter
 
-from istanbul_game.turn import TurnState, phase_allowed_cards, ALL_PHASE_CARDS
+import pytest
+
 from istanbul_game.actions import (
-    YieldTurn,
-    Move,
-    Pay,
-    PlaceTileAction,
-    GenericTileAction,
-    SkipTileAction,
+    ArrestFamilyCardAction,
     ChooseReward,
+    DoubleCardAction,
     EncounterGovernor,
     EncounterSmuggler,
     ExtraMoveCardAction,
-    NoMoveCardAction,
-    ReturnAssistantCardAction,
-    DoubleCardAction,
-    SellAnyCardAction,
-    MarketAction,
-    OneGoodCardAction,
     FiveLiraCardAction,
-    ArrestFamilyCardAction,
+    GenericTileAction,
+    MarketAction,
+    Move,
+    NoMoveCardAction,
+    OneGoodCardAction,
+    Pay,
+    ReturnAssistantCardAction,
+    SellAnyCardAction,
+    SkipTileAction,
     YellowTileAction,
+    YieldTurn,
 )
-from istanbul_game.constants import Player, Location, Card, Good
+from istanbul_game.constants import Card, Good, Location, Player
+from istanbul_game.turn import ALL_PHASE_CARDS, TurnState, phase_allowed_cards
 
 
 class TestTurnStateInitialization:
@@ -259,10 +260,11 @@ class TestTurnStateTakeAction:
         """Sell any card is valid in phase 3."""
         state = TurnState((Player.RED, Player.BLUE))
         state.current_phase = 3
-        action = SellAnyCardAction(MarketAction(
-            goods=Counter({Good.RED: 1}),
-            new_demand=Counter({Good.BLUE: 2, Good.GREEN: 2, Good.YELLOW: 1})
-        ))
+        action = SellAnyCardAction(
+            MarketAction(
+                goods=Counter({Good.RED: 1}), new_demand=Counter({Good.BLUE: 2, Good.GREEN: 2, Good.YELLOW: 1})
+            )
+        )
         assert state.valid_action(action) is True
 
     def test_governor_encounter_valid_in_phase_4(self) -> None:
@@ -333,7 +335,6 @@ class TestEarlyTurnExit:
     def test_can_yield_in_phase_2_with_no_money(self) -> None:
         """Player can yield in phase 2 if they cannot pay."""
         from tests.helpers import create_game, move_player_to_tile
-        from istanbul_game.constants import Tile
 
         game = create_game()
         red_player = game.player_states[Player.RED]
@@ -364,7 +365,6 @@ class TestEarlyTurnExit:
     def test_must_yield_when_no_assistants_available(self) -> None:
         """Player with no assistants must skip assistant placement."""
         from tests.helpers import create_game
-        from istanbul_game.constants import Tile
 
         game = create_game()
         red_player = game.player_states[Player.RED]
@@ -383,8 +383,8 @@ class TestEarlyTurnExit:
 
     def test_fountain_exempts_from_assistant_requirement(self) -> None:
         """At fountain, no assistant placement required."""
-        from tests.helpers import create_game, move_player_to_tile
         from istanbul_game.constants import Tile
+        from tests.helpers import create_game, move_player_to_tile
 
         game = create_game()
         red_player = game.player_states[Player.RED]
@@ -407,8 +407,8 @@ class TestSkipTileAction:
 
     def test_can_skip_tile_action(self) -> None:
         """Player can skip the tile action in phase 3."""
-        from tests.helpers import create_game, move_player_to_tile
         from istanbul_game.constants import Tile
+        from tests.helpers import create_game, move_player_to_tile
 
         game = create_game()
         red_player = game.player_states[Player.RED]
@@ -481,8 +481,8 @@ class TestPaymentToOtherPlayers:
 
     def test_no_payment_at_fountain(self) -> None:
         """No payment required when at fountain, even with other players."""
-        from tests.helpers import create_game, move_player_to_tile
         from istanbul_game.constants import Tile
+        from tests.helpers import create_game
 
         game = create_game()
         red_player = game.player_states[Player.RED]
@@ -503,7 +503,6 @@ class TestPaymentToOtherPlayers:
     def test_skip_phase_2_when_alone(self) -> None:
         """Phase 2 is skipped when player is alone on tile."""
         from tests.helpers import create_game
-        from istanbul_game.constants import Tile
 
         game = create_game()
         red_player = game.player_states[Player.RED]
@@ -523,8 +522,8 @@ class TestFamilyMemberCapture:
 
     def test_must_catch_other_family_members(self) -> None:
         """Player must choose reward after catching family members."""
-        from tests.helpers import create_game, move_player_to_tile
         from istanbul_game.constants import Tile
+        from tests.helpers import create_game, move_player_to_tile
 
         game = create_game()
         red_player = game.player_states[Player.RED]
@@ -596,7 +595,6 @@ class TestNPCEncounters:
     def test_governor_encounter_optional(self) -> None:
         """Governor encounter is optional in phase 4."""
         from tests.helpers import create_game, move_player_to_tile
-        from istanbul_game.actions import Pay
 
         governor_loc = Location(5)
         game = create_game(governor_location=governor_loc)
@@ -619,8 +617,8 @@ class TestNPCEncounters:
 
     def test_governor_moves_after_encounter(self) -> None:
         """Governor moves to new location after encounter."""
-        from tests.helpers import create_game, move_player_to_tile
         from istanbul_game.actions import Pay
+        from tests.helpers import create_game, move_player_to_tile
 
         governor_loc = Location(5)
         game = create_game(governor_location=governor_loc)
@@ -638,11 +636,7 @@ class TestNPCEncounters:
         assert game.tile_states[gov_tile].governor
 
         # Encounter governor
-        game.take_action(EncounterGovernor(
-            gain=Card.FIVE_LIRA,
-            cost=Pay(),
-            roll=(3, 4)
-        ))
+        game.take_action(EncounterGovernor(gain=Card.FIVE_LIRA, cost=Pay(), roll=(3, 4)))
 
         # Governor should no longer be at this tile
         assert not game.tile_states[gov_tile].governor
@@ -653,8 +647,8 @@ class TestNPCEncounters:
 
     def test_smuggler_moves_after_encounter(self) -> None:
         """Smuggler relocates based on dice roll after encounter."""
-        from tests.helpers import create_game, move_player_to_tile
         from istanbul_game.actions import Pay
+        from tests.helpers import create_game, move_player_to_tile
 
         smuggler_loc = Location(7)
         game = create_game(smuggler_location=smuggler_loc)
@@ -673,11 +667,13 @@ class TestNPCEncounters:
 
         # Encounter smuggler with a specific roll
         # Roll determines new location - smuggler moves regardless
-        game.take_action(EncounterSmuggler(
-            gain=Good.RED,
-            cost=Pay(),
-            roll=(3, 4)  # Sum = 7, will place smuggler at location determined by roll
-        ))
+        game.take_action(
+            EncounterSmuggler(
+                gain=Good.RED,
+                cost=Pay(),
+                roll=(3, 4),  # Sum = 7, will place smuggler at location determined by roll
+            )
+        )
 
         # Smuggler should be at location determined by roll (could be same location)
         # Just verify smuggler flag is set somewhere
@@ -686,8 +682,8 @@ class TestNPCEncounters:
 
     def test_can_encounter_both_governor_and_smuggler(self) -> None:
         """Can encounter both NPCs if at same tile."""
-        from tests.helpers import create_game, move_player_to_tile
         from istanbul_game.actions import Pay
+        from tests.helpers import create_game, move_player_to_tile
 
         # Place both at same location
         npc_loc = Location(5)
@@ -703,19 +699,11 @@ class TestNPCEncounters:
         game.take_action(SkipTileAction())
 
         # Encounter governor
-        game.take_action(EncounterGovernor(
-            gain=Card.FIVE_LIRA,
-            cost=Pay(),
-            roll=(3, 4)
-        ))
+        game.take_action(EncounterGovernor(gain=Card.FIVE_LIRA, cost=Pay(), roll=(3, 4)))
 
         # Still in phase 4, can encounter smuggler too
         assert game.turn_state.current_phase == 4
-        game.take_action(EncounterSmuggler(
-            gain=Good.RED,
-            cost=Pay(),
-            roll=(3, 4)
-        ))
+        game.take_action(EncounterSmuggler(gain=Good.RED, cost=Pay(), roll=(3, 4)))
 
 
 class TestAssistantPlacementRequirement:
@@ -724,7 +712,6 @@ class TestAssistantPlacementRequirement:
     def test_must_place_or_pick_assistant_unless_fountain(self) -> None:
         """Player must place or pick up assistant, except at fountain."""
         from tests.helpers import create_game
-        from istanbul_game.constants import Tile
 
         game = create_game()
         red_player = game.player_states[Player.RED]
@@ -754,8 +741,7 @@ class TestAssistantPlacementRequirement:
 
     def test_fountain_no_assistant_requirement(self) -> None:
         """Fountain doesn't require assistant placement/pickup."""
-        from tests.helpers import create_game, move_player_to_tile
-        from istanbul_game.constants import Tile
+        from tests.helpers import create_game
 
         game = create_game()
         red_player = game.player_states[Player.RED]

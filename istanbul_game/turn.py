@@ -1,13 +1,31 @@
 import typing
 
-from .actions import PlayerAction, YieldTurn, OneGoodCardAction, FiveLiraCardAction, ArrestFamilyCardAction, \
-    YellowTileAction, Move, ExtraMoveCardAction, NoMoveCardAction, ReturnAssistantCardAction, Pay, PlaceTileAction, \
-    SkipTileAction, DoubleCardAction, SellAnyCardAction, ChooseReward, EncounterGovernor, EncounterSmuggler, \
-    PoliceStationAction, GreenTileAction
-from .constants import Player, Card
+from .actions import (
+    ArrestFamilyCardAction,
+    ChooseReward,
+    DoubleCardAction,
+    EncounterGovernor,
+    EncounterSmuggler,
+    ExtraMoveCardAction,
+    FiveLiraCardAction,
+    GreenTileAction,
+    Move,
+    NoMoveCardAction,
+    OneGoodCardAction,
+    Pay,
+    PlaceTileAction,
+    PlayerAction,
+    PoliceStationAction,
+    ReturnAssistantCardAction,
+    SellAnyCardAction,
+    SkipTileAction,
+    YellowTileAction,
+    YieldTurn,
+)
+from .constants import Card, Player
 
 
-class TurnState(object):
+class TurnState:
     def __init__(self, players: typing.Sequence[Player]):
         self.players: typing.Final = players
         self.current_player_idx: int = 0
@@ -29,8 +47,9 @@ class TurnState(object):
         # pointless, although most common
         assert isinstance(action, PlayerAction)
         if self.yield_required:
-            return isinstance(action, (YieldTurn, OneGoodCardAction, FiveLiraCardAction, ArrestFamilyCardAction,
-                                       YellowTileAction))
+            return isinstance(
+                action, (YieldTurn, OneGoodCardAction, FiveLiraCardAction, ArrestFamilyCardAction, YellowTileAction)
+            )
         if isinstance(action, YieldTurn):
             return self.current_phase in (2, 4)
 
@@ -61,17 +80,19 @@ class TurnState(object):
             return
         if isinstance(action, Pay):
             self.current_phase = 3
-        if isinstance(action, (PlaceTileAction, SkipTileAction, DoubleCardAction, SellAnyCardAction, GreenTileAction)):
+        if isinstance(  # noqa: SIM102 - nested check for subtype exclusion is clearer
+            action, (PlaceTileAction, SkipTileAction, DoubleCardAction, SellAnyCardAction, GreenTileAction)
+        ):
             if not isinstance(action, PoliceStationAction):
                 self.current_phase = 4
         # All other actions do not alter turn state
 
 
-ALL_PHASE_CARDS: typing.FrozenSet[Card] = frozenset({Card.ONE_GOOD, Card.FIVE_LIRA, Card.ARREST_FAMILY})
+ALL_PHASE_CARDS: frozenset[Card] = frozenset({Card.ONE_GOOD, Card.FIVE_LIRA, Card.ARREST_FAMILY})
 
 
-def phase_allowed_cards(phase: int) -> typing.FrozenSet[Card]:
-    assert 1 <= phase <= 4, f'Invalid phase: {phase}'
+def phase_allowed_cards(phase: int) -> frozenset[Card]:
+    assert 1 <= phase <= 4, f"Invalid phase: {phase}"
 
     if phase in {2, 4}:
         return ALL_PHASE_CARDS

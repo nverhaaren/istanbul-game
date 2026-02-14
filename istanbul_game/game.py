@@ -1,17 +1,54 @@
 import collections
+from collections import Counter
+from collections.abc import Callable, Sequence
 from functools import partial
-from typing import Final, Union, Counter, Dict, List, Sequence, Optional, Callable
+from typing import Final
 
-from .actions import PlayerAction, YieldTurn, Move, Pay, ChooseReward, EncounterSmuggler, EncounterGovernor, \
-    SkipTileAction, PlaceTileAction, GenericTileAction, GreenTileAction, RedTileAction, YellowTileAction, \
-    CaravansaryAction, BlackMarketAction, TeaHouseAction, MarketAction, DoubleCardAction, SellAnyCardAction, \
-    PoliceStationAction, SultansPalaceAction, MosqueAction, OneGoodCardAction, ExtraMoveCardAction, NoMoveCardAction, \
-    FiveLiraCardAction, ReturnAssistantCardAction, ArrestFamilyCardAction, FountainAction
-from .constants import Location, Card, Roll, Good, Player, Tile, ROLL_LOCATIONS
+from .actions import (
+    ArrestFamilyCardAction,
+    BlackMarketAction,
+    CaravansaryAction,
+    ChooseReward,
+    DoubleCardAction,
+    EncounterGovernor,
+    EncounterSmuggler,
+    ExtraMoveCardAction,
+    FiveLiraCardAction,
+    FountainAction,
+    GenericTileAction,
+    GreenTileAction,
+    MarketAction,
+    MosqueAction,
+    Move,
+    NoMoveCardAction,
+    OneGoodCardAction,
+    Pay,
+    PlaceTileAction,
+    PlayerAction,
+    PoliceStationAction,
+    RedTileAction,
+    ReturnAssistantCardAction,
+    SellAnyCardAction,
+    SkipTileAction,
+    SultansPalaceAction,
+    TeaHouseAction,
+    YellowTileAction,
+    YieldTurn,
+)
+from .constants import ROLL_LOCATIONS, Card, Good, Location, Player, Roll, Tile
 from .lib.utils import ImmutableInvertibleMapping
 from .player import PlayerState
-from .tiles import TileState, MosqueTileState, PostOfficeTileState, CaravansaryTileState, WainwrightTileState, \
-    MarketTileState, SultansPalaceTileState, GemstoneDealerTileState, initial_tile_state
+from .tiles import (
+    CaravansaryTileState,
+    GemstoneDealerTileState,
+    MarketTileState,
+    MosqueTileState,
+    PostOfficeTileState,
+    SultansPalaceTileState,
+    TileState,
+    WainwrightTileState,
+    initial_tile_state,
+)
 from .turn import TurnState
 
 
@@ -21,18 +58,26 @@ def taxicab_dist(loc1: Location, loc2: Location) -> int:
     return abs(coords1[0] - coords2[0]) + abs(coords1[1] - coords2[1])
 
 
-class GameState(object):
-    def __init__(self, players: Sequence[Player], location_map: ImmutableInvertibleMapping[Location, Tile],
-                 small_demand: Counter[Good], large_demand: Counter[Good], governor_location: Location,
-                 smuggler_location: Location, player_hands: Dict[Player, Card]):
+class GameState:
+    def __init__(
+        self,
+        players: Sequence[Player],
+        location_map: ImmutableInvertibleMapping[Location, Tile],
+        small_demand: Counter[Good],
+        large_demand: Counter[Good],
+        governor_location: Location,
+        smuggler_location: Location,
+        player_hands: dict[Player, Card],
+    ):
         self.players: Final = tuple(players)
         self.player_count: Final[int] = len(self.players)
         assert 2 <= self.player_count <= 5
         self.victory_threshold: Final[int] = 5 if self.player_count != 2 else 6
         self.location_map: Final[ImmutableInvertibleMapping[Location, Tile]] = location_map
 
-        self.tile_states: Dict[Tile, TileState] = {tile: initial_tile_state(tile, self.player_count)
-                                                   for loc, tile in self.location_map.items()}
+        self.tile_states: dict[Tile, TileState] = {
+            tile: initial_tile_state(tile, self.player_count) for loc, tile in self.location_map.items()
+        }
         self.get_market_state(Tile.SMALL_MARKET).set_demand(small_demand)
         self.get_market_state(Tile.LARGE_MARKET).set_demand(large_demand)
         self.tile_states[Tile.POLICE_STATION].family_members |= set(self.players)
@@ -40,7 +85,7 @@ class GameState(object):
         self.tile_states[self.location_map[governor_location]].governor = True
         self.tile_states[self.location_map[smuggler_location]].smuggler = True
 
-        self.player_states: Dict[Player, PlayerState] = collections.OrderedDict()
+        self.player_states: dict[Player, PlayerState] = collections.OrderedDict()
         for lira, p in enumerate(self.players, 2):
             self.player_states[p] = PlayerState(
                 p,
@@ -84,9 +129,9 @@ class GameState(object):
     @property
     def current_player_tile_state(self) -> TileState:
         # self.tile_states[self.current_player_tile]
-        return self.tile_states[self.location_map[
-            self.player_states[self.turn_state.players[self.turn_state.current_player_idx]].location
-        ]]
+        return self.tile_states[
+            self.location_map[self.player_states[self.turn_state.players[self.turn_state.current_player_idx]].location]
+        ]
 
     # Typed accessors for specific tile states
     @property
@@ -141,9 +186,12 @@ class GameState(object):
             return True
         return False
 
-    def ranking(self) -> Dict[Player, List[int]]:
-        scores = [(p.rubies, p.lira, sum(p.cart_contents.values()), sum(p.hand.values()), i)
-                  for i in range(self.player_count) if (p := self.player_states[self.players[i]]) is p]
+    def ranking(self) -> dict[Player, list[int]]:
+        scores = [
+            (p.rubies, p.lira, sum(p.cart_contents.values()), sum(p.hand.values()), i)
+            for i in range(self.player_count)
+            if (p := self.player_states[self.players[i]]) is p
+        ]
         return {self.players[i]: list(score) for *score, i in sorted(scores, reverse=True)}
 
     def _move_to(self, location: Location) -> None:
@@ -155,14 +203,15 @@ class GameState(object):
 
     def _discard(self, card: Card) -> None:
         hand = self.player_states[self.turn_state.current_player].hand
-        assert hand[card] >= 1, '{} does not have {}'.format(self.turn_state.current_player, card)
+        assert hand[card] >= 1, f"{self.turn_state.current_player} does not have {card}"
         hand[card] -= 1
         self.caravansary_state.discard_onto(card)
 
     def _spend(self, lira: int) -> None:
         player_state = self.player_states[self.turn_state.current_player]
-        assert player_state.lira >= lira, '{} does not have {} lira; has {}'.format(
-            self.turn_state.current_player, lira, player_state.lira)
+        assert player_state.lira >= lira, (
+            f"{self.turn_state.current_player} does not have {lira} lira; has {player_state.lira}"
+        )
         player_state.lira -= lira
 
     def _acquire(self, good: Good) -> None:
@@ -179,8 +228,9 @@ class GameState(object):
     def _trade(self, goods: Counter[Good]) -> None:
         player_state = self.player_states[self.turn_state.current_player]
         for good, amount in goods.items():
-            assert player_state.cart_contents[good] >= amount, '{} does not have {} {}'.format(
-                self.turn_state.current_player, amount, good)
+            assert player_state.cart_contents[good] >= amount, (
+                f"{self.turn_state.current_player} does not have {amount} {good}"
+            )
             player_state.cart_contents[good] -= amount
 
     def _choose_reward(self, choice: ChooseReward) -> None:
@@ -210,25 +260,27 @@ class GameState(object):
         tile = ROLL_LOCATIONS[Location(sum(roll))]
         return self.location_map.inverse[tile]
 
-    def _check_roll(self, roll: Union[Roll, RedTileAction]) -> int:
+    def _check_roll(self, roll: Roll | RedTileAction) -> int:
         if isinstance(roll, RedTileAction):
-            assert Good.RED in self.player_states[self.turn_state.current_player].tiles, \
-                '{} does not have the red tile'.format(self.turn_state.current_player)
+            assert Good.RED in self.player_states[self.turn_state.current_player].tiles, (
+                f"{self.turn_state.current_player} does not have the red tile"
+            )
             if roll.method is RedTileAction.TO_FOUR:
-                assert (roll.initial_roll[0] == roll.final_roll[0] and roll.final_roll[1] == 4) or \
-                       (roll.initial_roll[1] == roll.final_roll[1] and roll.final_roll[0] == 4) or \
-                       (roll.initial_roll[0] == roll.final_roll[1] and roll.final_roll[0] == 4) or \
-                       (roll.initial_roll[1] == roll.final_roll[0] and roll.final_roll[1] == 4), \
-                       'Red tile not used correctly'
+                assert (
+                    (roll.initial_roll[0] == roll.final_roll[0] and roll.final_roll[1] == 4)
+                    or (roll.initial_roll[1] == roll.final_roll[1] and roll.final_roll[0] == 4)
+                    or (roll.initial_roll[0] == roll.final_roll[1] and roll.final_roll[0] == 4)
+                    or (roll.initial_roll[1] == roll.final_roll[0] and roll.final_roll[1] == 4)
+                ), "Red tile not used correctly"
             return sum(roll.final_roll)
         return sum(roll)
 
     def take_action(self, action: PlayerAction) -> None:
         assert not self.completed
         if self.outstanding_reward_choices:
-            assert not isinstance(action, YieldTurn), 'Player needs to choose a reward for capturing family members'
+            assert not isinstance(action, YieldTurn), "Player needs to choose a reward for capturing family members"
         if isinstance(action, ChooseReward):
-            assert self.outstanding_reward_choices, 'No more rewards to choose'
+            assert self.outstanding_reward_choices, "No more rewards to choose"
             self._choose_reward(action)
             return
         if isinstance(action, YieldTurn):
@@ -248,7 +300,7 @@ class GameState(object):
                 self._discard(Card.EXTRA_MOVE)
             destination = action.tile
             distance = taxicab_dist(player_state.location, destination)
-            assert distance in move_range, 'Cannot move {} spaces'.format(distance)
+            assert distance in move_range, f"Cannot move {distance} spaces"
             self._move_to(action.tile)
 
         tile = self.location_map[player_state.location]
@@ -275,14 +327,14 @@ class GameState(object):
                         player_state.assistant_locations.add(player_state.location)
                         tile_state.assistants.add(player)
                     else:
-                        assert tile is Tile.FOUNTAIN, 'If no assistants in stack or at destination must end turn'
+                        assert tile is Tile.FOUNTAIN, "If no assistants in stack or at destination must end turn"
             if len(tile_state.players) == 1 or tile is Tile.FOUNTAIN:
                 self.turn_state.skip_phase_2()
             return
 
         if isinstance(action, Pay):
             cost = (len(tile_state.players) - 1) * 2
-            assert 0 < cost <= player_state.lira, 'Cannot pay {} when you have {}'.format(cost, player_state.lira)
+            assert 0 < cost <= player_state.lira, f"Cannot pay {cost} when you have {player_state.lira}"
             for other_player in tile_state.players:
                 if other_player == player:
                     continue
@@ -295,7 +347,7 @@ class GameState(object):
             return
 
         if isinstance(action, EncounterGovernor):
-            assert tile_state.governor, 'Governor is not at {} ({})'.format(tile, player_state.location)
+            assert tile_state.governor, f"Governor is not at {tile} ({player_state.location})"
             player_state.hand[action.gain] += 1
             if isinstance(action.cost, Pay):
                 self._spend(2)
@@ -306,9 +358,10 @@ class GameState(object):
             return
 
         if isinstance(action, EncounterSmuggler):
-            assert tile_state.smuggler, 'Smuggler is not at {} ({})'.format(tile, player_state.location)
-            player_state.cart_contents[action.gain] = min(player_state.cart_contents[action.gain] + 1,
-                                                          player_state.cart_max)
+            assert tile_state.smuggler, f"Smuggler is not at {tile} ({player_state.location})"
+            player_state.cart_contents[action.gain] = min(
+                player_state.cart_contents[action.gain] + 1, player_state.cart_max
+            )
             if isinstance(action.cost, Pay):
                 self._spend(2)
             else:
@@ -341,7 +394,7 @@ class GameState(object):
             if isinstance(action, ReturnAssistantCardAction):
                 self._discard(Card.RETURN_ASSISTANT)
             else:
-                assert Good.YELLOW in player_state.tiles, '{} does not have yellow tile'.format(player)
+                assert Good.YELLOW in player_state.tiles, f"{player} does not have yellow tile"
                 self._spend(2)
             self.tile_states[self.location_map[action.from_tile]].assistants.remove(player)
             player_state.stack_size += 1
@@ -359,8 +412,10 @@ class GameState(object):
                 self._encounter_family_members()
                 return
             assert all(isinstance(sub, GenericTileAction) for sub in action.actions)
-            act = {Card.DOUBLE_PO: self._handle_post_office_action,
-                   Card.DOUBLE_DEALER: self._handle_gemstone_dealer_action}[action.card]
+            act = {
+                Card.DOUBLE_PO: self._handle_post_office_action,
+                Card.DOUBLE_DEALER: self._handle_gemstone_dealer_action,
+            }[action.card]
             act()
             act()
             self._encounter_family_members()
@@ -368,7 +423,7 @@ class GameState(object):
 
         if isinstance(action, SellAnyCardAction):
             self._discard(Card.SELL_ANY)
-            assert tile is Tile.SMALL_MARKET, 'Can only use sell any card at small market'
+            assert tile is Tile.SMALL_MARKET, "Can only use sell any card at small market"
             self._trade(action.action.goods)
             n = sum(action.action.goods.values())
             gain = ((n + 1) * (n + 2)) // 2 - 1
@@ -379,13 +434,13 @@ class GameState(object):
             return
 
         if isinstance(action, GreenTileAction):
-            assert Good.GREEN in player_state.tiles, '{} does not have green tile'.format(player)
+            assert Good.GREEN in player_state.tiles, f"{player} does not have green tile"
             warehouse_good_map = {
                 Tile.FABRIC_WAREHOUSE: Good.RED,
                 Tile.SPICE_WAREHOUSE: Good.GREEN,
                 Tile.FRUIT_WAREHOUSE: Good.YELLOW,
             }
-            assert tile in warehouse_good_map, 'Green tile can only be used at a warehouse, not {}'.format(tile)
+            assert tile in warehouse_good_map, f"Green tile can only be used at a warehouse, not {tile}"
             self._max_cart(warehouse_good_map[tile])
             self._spend(2)
             self._acquire(action.good)
@@ -394,7 +449,7 @@ class GameState(object):
 
         assert isinstance(action, PlaceTileAction)
         if isinstance(action, GenericTileAction):
-            generic_action_map: Dict[Tile, Callable[[], None]] = {
+            generic_action_map: dict[Tile, Callable[[], None]] = {
                 Tile.POST_OFFICE: self._handle_post_office_action,
                 Tile.FABRIC_WAREHOUSE: partial(self._max_cart, Good.RED),
                 Tile.FRUIT_WAREHOUSE: partial(self._max_cart, Good.YELLOW),
@@ -425,7 +480,7 @@ class GameState(object):
             case SultansPalaceAction():
                 self._handle_sultans_palace_action(action)
             case _:
-                raise AssertionError(f'Unexpected action type: {type(action)}')
+                raise AssertionError(f"Unexpected action type: {type(action)}")
         self._encounter_family_members()
 
     def _handle_mosque_action(self, action: MosqueAction) -> None:
@@ -435,8 +490,8 @@ class GameState(object):
         tile = self.location_map[player_state.location]
         tile_state = self.tile_states[tile]
 
-        assert isinstance(tile_state, MosqueTileState), 'Not at a mosque'
-        assert action.good_color not in player_state.tiles, '{} already got {} tile'.format(player, action.good_color)
+        assert isinstance(tile_state, MosqueTileState), "Not at a mosque"
+        assert action.good_color not in player_state.tiles, f"{player} already got {action.good_color} tile"
         cost = tile_state.available_tiles[action.good_color]
         self._trade(collections.Counter({action.good_color: cost}))
         tile_state.take_action(action.good_color)
@@ -444,15 +499,16 @@ class GameState(object):
             player_state.stack_size += 1
 
         for pair in ((Good.BLUE, Good.YELLOW), (Good.RED, Good.GREEN)):
-            if (action.good_color is pair[0] and pair[1] in player_state.tiles) or \
-                    (action.good_color is pair[1] and pair[0] in player_state.tiles):
+            if (action.good_color is pair[0] and pair[1] in player_state.tiles) or (
+                action.good_color is pair[1] and pair[0] in player_state.tiles
+            ):
                 player_state.rubies += 1
             player_state.tiles.add(action.good_color)
 
     def _handle_post_office_action(self) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
-        assert self.location_map[player_state.location] is Tile.POST_OFFICE, 'Not at post office'
+        assert self.location_map[player_state.location] is Tile.POST_OFFICE, "Not at post office"
 
         goods, lira = self.post_office_state.take_action()
         for good in goods:
@@ -465,9 +521,9 @@ class GameState(object):
 
         tile = self.location_map[player_state.location]
         tile_state = self.tile_states[tile]
-        assert tile is Tile.POLICE_STATION, '{} not at police station'.format(player)
-        assert player in tile_state.family_members, '{} does not have family at police station'.format(player)
-        assert player_state.location is not action.location, 'Cannot send family member to police station'
+        assert tile is Tile.POLICE_STATION, f"{player} not at police station"
+        assert player in tile_state.family_members, f"{player} does not have family at police station"
+        assert player_state.location is not action.location, "Cannot send family member to police station"
 
         tile_state.family_members.remove(player)
         destination_tile_state = self.tile_states[self.location_map[action.location]]
@@ -485,7 +541,7 @@ class GameState(object):
         tile_state.players.add(player)
         player_state.location = self.location_map.inverse[Tile.POLICE_STATION]
 
-    def _handle_fountain_action(self, action: Optional[FountainAction] = None) -> None:
+    def _handle_fountain_action(self, action: FountainAction | None = None) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
@@ -579,7 +635,7 @@ class GameState(object):
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
-        assert player_state.cart_max <= 5, 'No room for additional extensions for {}'.format(player)
+        assert player_state.cart_max <= 5, f"No room for additional extensions for {player}"
         self._spend(7)
         self.wainwright_state.take_action()
         player_state.cart_max += 1
@@ -589,10 +645,10 @@ class GameState(object):
     def _handle_gemstone_dealer_action(self) -> None:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
-        assert self.location_map[player_state.location] is Tile.GEMSTONE_DEALER, 'Not at gemstone dealer'
+        assert self.location_map[player_state.location] is Tile.GEMSTONE_DEALER, "Not at gemstone dealer"
 
         dealer_state = self.gemstone_dealer_state
-        assert dealer_state.cost is not None, 'No more rubies to buy at the Gemstone Dealer'
+        assert dealer_state.cost is not None, "No more rubies to buy at the Gemstone Dealer"
         self._spend(dealer_state.cost)
         dealer_state.take_action()
 

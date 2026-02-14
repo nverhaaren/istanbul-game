@@ -12,6 +12,14 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
 
+  # Ruff linter and formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.7
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
   # Local hooks for project-specific checks
   - repo: local
     hooks:

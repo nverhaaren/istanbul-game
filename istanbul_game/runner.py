@@ -6,7 +6,7 @@ from .game import GameState
 from .load.phases import PhaseLoader, TurnRow
 
 
-class Runner(object):
+class Runner:
     def __init__(self, phase_loader: PhaseLoader, turn_source: typing.Iterable[TurnRow]):
         self.phase_loader: typing.Final = phase_loader
         self.turn_source: typing.Final = turn_source
@@ -21,7 +21,7 @@ class Runner(object):
                 try:
                     self.game_state.take_action(action)
                 except Exception:
-                    logging.error(f'Got exception at turn {idx}, action {action}')
+                    logging.error(f"Got exception at turn {idx}, action {action}")
                     raise
 
     def _turn_states(self, actions: typing.Iterable[PlayerAction]) -> typing.Iterator[GameState]:
@@ -36,6 +36,6 @@ class Runner(object):
             try:
                 game_state = self._turn_states(actions)
             except Exception:
-                logging.error(f'Got exception at turn {idx}, actions: {actions}')
+                logging.error(f"Got exception at turn {idx}, actions: {actions}")
                 raise
             yield game_state
