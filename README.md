@@ -18,10 +18,46 @@ Set up pre-commit hooks to run type checking and tests before each commit:
 pre-commit install
 ```
 
-This will run `mypy` and `pytest` automatically on every commit. To run hooks manually:
+This will run `ruff` (linting and formatting), `mypy`, and `pytest` automatically on every commit. To run hooks manually:
 
 ```bash
 pre-commit run --all-files
+```
+
+## Usage
+
+### Replaying a Game from CSV Files
+
+Replay a recorded game from setup and moves CSV files and print the final game state as JSON:
+
+```bash
+python -m istanbul_game.entry_points.replay_from_csvs \
+    --setup_csv path/to/setup.csv \
+    --moves_csv path/to/moves.csv
+```
+
+Use `--through_row N` to replay only the first N rows of moves.
+
+### Extracting Player State Over Time
+
+Track how a specific aspect of a player's state changes over the course of a game:
+
+```bash
+python -m istanbul_game.entry_points.extraction_stub \
+    --setup_csv path/to/setup.csv \
+    --moves_csv path/to/moves.csv \
+    --player Red \
+    --key inventory
+```
+
+This outputs one JSON object per turn showing snapshots, updates, and removed keys for the specified player and state key.
+
+### Running the Example Game
+
+Run a hardcoded example game demonstrating the action API:
+
+```bash
+python -m istanbul_game.dev.example_game
 ```
 
 ## Development Commands
@@ -41,6 +77,28 @@ pytest -v
 Run a specific test file:
 ```bash
 pytest tests/test_game.py
+```
+
+### Linting and Formatting
+
+Run the linter:
+```bash
+ruff check
+```
+
+Auto-fix lint issues:
+```bash
+ruff check --fix
+```
+
+Check formatting:
+```bash
+ruff format --check
+```
+
+Apply formatting:
+```bash
+ruff format
 ```
 
 ### Type Checking
@@ -114,12 +172,6 @@ Turns have multiple phases:
 1. Movement/Card play
 2. Payment (if other players at location)
 3. Tile action or encounter special NPCs (governor/smuggler)
-
-## Running Example Game
-
-```bash
-python -m istanbul_game.dev.example_game
-```
 
 ## License
 
