@@ -92,6 +92,7 @@ select = [
 ignore = [
     "RUF018",  # assignment expressions in assert - established pattern in codebase
     "SIM108",  # ternary operator - if/else blocks are often more readable
+    "UP038",   # isinstance union syntax - deprecated by ruff, slower at runtime
 ]
 
 [tool.ruff.lint.per-file-ignores]
