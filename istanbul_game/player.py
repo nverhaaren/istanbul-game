@@ -3,6 +3,7 @@ from collections import Counter
 from typing import Final
 
 from .constants import Card, Good, Location, Player
+from .lib.utils import OrderedSet
 
 
 class PlayerState:
@@ -15,8 +16,8 @@ class PlayerState:
         self.cart_max: int = 2
         self.cart_contents: Counter[Good] = collections.Counter({g: 0 for g in Good})
         self.stack_size: int = 4
-        self.tiles: set[Good] = set()
+        self.tiles: OrderedSet[Good] = OrderedSet()
 
         self.location: Location = fountain
-        self.assistant_locations: set[Location] = set()
+        self.assistant_locations: OrderedSet[Location] = OrderedSet()
         self.family_location: Location = police_station

@@ -570,7 +570,7 @@ class TestJSONToCSV:
             {"type": "YieldTurn"},
         ]
         row = json_turn_to_csv(actions)
-        assert "Card-1Good" in row.rewards or "OneGood" in row.rewards
+        assert row.rewards == "OneGood"
 
     def test_police_station(self) -> None:
         actions: list[dict[str, object]] = [
@@ -643,7 +643,7 @@ class TestCSVJSONRoundTrip:
         with open(EXAMPLE_DIR / "expected_output.json") as f:
             expected = json.load(f)
 
-        assert _normalize(actual) == _normalize(expected)
+        assert actual == expected
 
     def test_csv_json_csv_roundtrip(self) -> None:
         """CSV -> JSON -> CSV -> JSON should produce identical JSON both times."""
@@ -673,15 +673,3 @@ class TestCSVJSONRoundTrip:
         assert len(all_json_turns_1) == len(all_json_turns_2)
         for i, (t1, t2) in enumerate(zip(all_json_turns_1, all_json_turns_2, strict=True)):
             assert t1 == t2, f"Turn {i} mismatch:\n  original: {t1}\n  roundtrip: {t2}"
-
-
-def _normalize(obj: object) -> object:
-    """Normalize JSON-like objects for comparison, sorting list elements where possible."""
-    if isinstance(obj, dict):
-        return {k: _normalize(v) for k, v in sorted(obj.items())}
-    if isinstance(obj, list):
-        normalized = [_normalize(x) for x in obj]
-        if all(isinstance(x, (str, int, float, bool)) for x in normalized):
-            return sorted(normalized, key=str)
-        return normalized
-    return obj

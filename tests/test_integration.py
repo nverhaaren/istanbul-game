@@ -24,17 +24,22 @@ def test_red_wins_3p_from_csv() -> None:
     with open(EXAMPLE_DIR / "expected_output.json") as f:
         expected = json.load(f)
 
-    # Compare with normalization to handle set ordering differences in serialized lists
-    assert _normalize(actual) == _normalize(expected)
+    assert actual == expected
 
 
-def _normalize(obj: object) -> object:
-    """Normalize JSON-like objects for comparison, sorting list elements where possible."""
-    if isinstance(obj, dict):
-        return {k: _normalize(v) for k, v in sorted(obj.items())}
-    if isinstance(obj, list):
-        normalized = [_normalize(x) for x in obj]
-        if all(isinstance(x, (str, int, float, bool)) for x in normalized):
-            return sorted(normalized, key=str)
-        return normalized
-    return obj
+def test_red_wins_3p_trace() -> None:
+    """Replay with trace mode and verify trace length and final state."""
+    with open(EXAMPLE_DIR / "setup.csv") as setup, open(EXAMPLE_DIR / "moves.csv") as moves:
+        runner = runner_from_csvs(setup, moves)
+        trace = runner.run_with_trace()
+
+    # 1 initial state + 57 turns
+    assert len(trace) == 58
+    assert trace[0]["mutable"]["completed"] is False
+    assert trace[-1]["mutable"]["completed"] is True
+
+    # Final trace entry should match expected output
+    with open(EXAMPLE_DIR / "expected_output.json") as f:
+        expected = json.load(f)
+
+    assert trace[-1] == expected

@@ -30,7 +30,7 @@ class Runner:
             self.game_state.take_action(action)
             yield self.game_state
 
-    def run_with_trace(self) -> list[dict]:
+    def run_with_trace(self) -> list[dict[str, object]]:
         """Run the game and return serialized game state after each turn.
 
         Returns a list of serialized game states: the initial state followed by

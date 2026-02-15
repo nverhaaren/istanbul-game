@@ -104,6 +104,22 @@ _GOOD_NAMES: dict[Good, str] = {g: g.name.title() for g in Good}
 # Reverse mapping from title-cased name to Good enum
 _GOOD_FROM_NAME: dict[str, Good] = {v: k for k, v in _GOOD_NAMES.items()}
 
+
+def card_from_name(name: str) -> Card:
+    """Resolve a serialized card name (e.g., ``"OneGood"``) to a Card enum value."""
+    result = _CARD_FROM_NAME.get(name)
+    if result is None:
+        raise ValueError(f"Unknown card name: {name!r}")
+    return result
+
+
+def good_from_name(name: str) -> Good:
+    """Resolve a title-cased good name (e.g., ``"Red"``) to a Good enum value."""
+    result = _GOOD_FROM_NAME.get(name)
+    if result is None:
+        raise ValueError(f"Unknown good name: {name!r}")
+    return result
+
 # RedTileAction method serialization
 _METHOD_TO_JSON: dict[str, str] = {
     RedTileAction.TO_FOUR: "to_four",

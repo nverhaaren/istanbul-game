@@ -3,6 +3,7 @@ from collections import Counter
 from typing import NamedTuple
 
 from .constants import Card, Good, Player, Tile
+from .lib.utils import OrderedSet
 
 
 class MailSlot(NamedTuple):
@@ -18,9 +19,9 @@ class TileState:
     def __init__(self) -> None:
         self.governor: bool = False
         self.smuggler: bool = False
-        self.assistants: set[Player] = set()
-        self.family_members: set[Player] = set()
-        self.players: set[Player] = set()
+        self.assistants: OrderedSet[Player] = OrderedSet()
+        self.family_members: OrderedSet[Player] = OrderedSet()
+        self.players: OrderedSet[Player] = OrderedSet()
 
 
 class GenericTileState(TileState):

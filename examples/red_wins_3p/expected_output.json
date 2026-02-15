@@ -1,466 +1,466 @@
 {
-    "immutable": {
-        "players": [
+  "immutable": {
+    "players": [
+      "Red",
+      "Blue",
+      "Green"
+    ],
+    "player_count": 3,
+    "victory_threshold": 5,
+    "tile_layout": [
+      "GREAT_MOSQUE",
+      "POST_OFFICE",
+      "FABRIC_WAREHOUSE",
+      "SMALL_MOSQUE",
+      "FRUIT_WAREHOUSE",
+      "POLICE_STATION",
+      "FOUNTAIN",
+      "SPICE_WAREHOUSE",
+      "BLACK_MARKET",
+      "CARAVANSARY",
+      "SMALL_MARKET",
+      "TEA_HOUSE",
+      "SULTANS_PALACE",
+      "LARGE_MARKET",
+      "WAINWRIGHT",
+      "GEMSTONE_DEALER"
+    ]
+  },
+  "mutable": {
+    "turn_state": {
+      "players": [
+        "Red",
+        "Blue",
+        "Green"
+      ],
+      "current_player_idx": 0,
+      "current_player": "Red",
+      "current_phase": 1,
+      "yield_required": false
+    },
+    "outstanding_reward_choices": 0,
+    "completed": true,
+    "tile_states": [
+      {
+        "name": "Great Mosque",
+        "location": 1,
+        "roll_location": 15,
+        "general": {
+          "governor": true,
+          "smuggler": false,
+          "assistants": [],
+          "family_members": [],
+          "players": []
+        },
+        "mutable": {
+          "Blue": 3,
+          "Yellow": 3
+        }
+      },
+      {
+        "name": "Post Office",
+        "location": 2,
+        "roll_location": 5,
+        "general": {
+          "governor": false,
+          "smuggler": false,
+          "assistants": [],
+          "family_members": [],
+          "players": []
+        },
+        "mutable": {
+          "position": 3,
+          "available": {
+            "goods": [
+              "Red",
+              "Blue"
+            ],
+            "lira": 4
+          }
+        }
+      },
+      {
+        "name": "Fabric Warehouse",
+        "location": 3,
+        "roll_location": 2,
+        "general": {
+          "governor": false,
+          "smuggler": false,
+          "assistants": [
+            "Blue",
+            "Green"
+          ],
+          "family_members": [],
+          "players": [
+            "Blue",
+            "Green"
+          ]
+        }
+      },
+      {
+        "name": "Small Mosque",
+        "location": 4,
+        "roll_location": 14,
+        "general": {
+          "governor": false,
+          "smuggler": false,
+          "assistants": [],
+          "family_members": [],
+          "players": []
+        },
+        "mutable": {
+          "Red": 3,
+          "Green": 3
+        }
+      },
+      {
+        "name": "Fruit Warehouse",
+        "location": 5,
+        "roll_location": 4,
+        "general": {
+          "governor": false,
+          "smuggler": false,
+          "assistants": [],
+          "family_members": [],
+          "players": []
+        }
+      },
+      {
+        "name": "Police Station",
+        "location": 6,
+        "roll_location": 12,
+        "general": {
+          "governor": false,
+          "smuggler": false,
+          "assistants": [],
+          "family_members": [
             "Red",
             "Blue",
             "Green"
-        ],
-        "player_count": 3,
-        "victory_threshold": 5,
-        "tile_layout": [
-            "GREAT_MOSQUE",
-            "POST_OFFICE",
-            "FABRIC_WAREHOUSE",
-            "SMALL_MOSQUE",
-            "FRUIT_WAREHOUSE",
-            "POLICE_STATION",
-            "FOUNTAIN",
-            "SPICE_WAREHOUSE",
-            "BLACK_MARKET",
-            "CARAVANSARY",
-            "SMALL_MARKET",
-            "TEA_HOUSE",
-            "SULTANS_PALACE",
-            "LARGE_MARKET",
-            "WAINWRIGHT",
-            "GEMSTONE_DEALER"
-        ]
-    },
-    "mutable": {
-        "turn_state": {
-            "players": [
-                "Red",
-                "Blue",
-                "Green"
-            ],
-            "current_player_idx": 0,
-            "current_player": "Red",
-            "current_phase": 1,
-            "yield_required": false
-        },
-        "outstanding_reward_choices": 0,
-        "completed": true,
-        "tile_states": [
-            {
-                "name": "Great Mosque",
-                "location": 1,
-                "roll_location": 15,
-                "general": {
-                    "governor": true,
-                    "smuggler": false,
-                    "assistants": [],
-                    "family_members": [],
-                    "players": []
-                },
-                "mutable": {
-                    "Yellow": 3,
-                    "Blue": 3
-                }
-            },
-            {
-                "name": "Post Office",
-                "location": 2,
-                "roll_location": 5,
-                "general": {
-                    "governor": false,
-                    "smuggler": false,
-                    "assistants": [],
-                    "family_members": [],
-                    "players": []
-                },
-                "mutable": {
-                    "position": 3,
-                    "available": {
-                        "goods": [
-                            "Red",
-                            "Blue"
-                        ],
-                        "lira": 4
-                    }
-                }
-            },
-            {
-                "name": "Fabric Warehouse",
-                "location": 3,
-                "roll_location": 2,
-                "general": {
-                    "governor": false,
-                    "smuggler": false,
-                    "assistants": [
-                        "Green",
-                        "Blue"
-                    ],
-                    "family_members": [],
-                    "players": [
-                        "Green",
-                        "Blue"
-                    ]
-                }
-            },
-            {
-                "name": "Small Mosque",
-                "location": 4,
-                "roll_location": 14,
-                "general": {
-                    "governor": false,
-                    "smuggler": false,
-                    "assistants": [],
-                    "family_members": [],
-                    "players": []
-                },
-                "mutable": {
-                    "Red": 3,
-                    "Green": 3
-                }
-            },
-            {
-                "name": "Fruit Warehouse",
-                "location": 5,
-                "roll_location": 4,
-                "general": {
-                    "governor": false,
-                    "smuggler": false,
-                    "assistants": [],
-                    "family_members": [],
-                    "players": []
-                }
-            },
-            {
-                "name": "Police Station",
-                "location": 6,
-                "roll_location": 12,
-                "general": {
-                    "governor": false,
-                    "smuggler": false,
-                    "assistants": [],
-                    "family_members": [
-                        "Green",
-                        "Red",
-                        "Blue"
-                    ],
-                    "players": []
-                }
-            },
-            {
-                "name": "Fountain",
-                "location": 7,
-                "roll_location": 7,
-                "general": {
-                    "governor": false,
-                    "smuggler": true,
-                    "assistants": [],
-                    "family_members": [],
-                    "players": []
-                }
-            },
-            {
-                "name": "Spice Warehouse",
-                "location": 8,
-                "roll_location": 3,
-                "general": {
-                    "governor": false,
-                    "smuggler": false,
-                    "assistants": [],
-                    "family_members": [],
-                    "players": []
-                }
-            },
-            {
-                "name": "Black Market",
-                "location": 9,
-                "roll_location": 8,
-                "general": {
-                    "governor": false,
-                    "smuggler": false,
-                    "assistants": [],
-                    "family_members": [],
-                    "players": []
-                }
-            },
-            {
-                "name": "Caravansary",
-                "location": 10,
-                "roll_location": 6,
-                "general": {
-                    "governor": false,
-                    "smuggler": false,
-                    "assistants": [],
-                    "family_members": [],
-                    "players": []
-                },
-                "mutable": {
-                    "discard": [
-                        "OneGood"
-                    ],
-                    "awaiting_discard": false
-                }
-            },
-            {
-                "name": "Small Market",
-                "location": 11,
-                "roll_location": 11,
-                "general": {
-                    "governor": false,
-                    "smuggler": false,
-                    "assistants": [],
-                    "family_members": [],
-                    "players": []
-                },
-                "immutable": {
-                    "one_cost": 2,
-                    "cost_map": [
-                        2,
-                        5,
-                        9,
-                        14,
-                        20
-                    ]
-                },
-                "mutable": {
-                    "demand": {
-                        "Red": 2,
-                        "Green": 2,
-                        "Yellow": 1
-                    },
-                    "expecting_demand": false
-                }
-            },
-            {
-                "name": "Tea House",
-                "location": 12,
-                "roll_location": 9,
-                "general": {
-                    "governor": false,
-                    "smuggler": false,
-                    "assistants": [
-                        "Red"
-                    ],
-                    "family_members": [],
-                    "players": []
-                }
-            },
-            {
-                "name": "Sultan's Palace",
-                "location": 13,
-                "roll_location": 13,
-                "general": {
-                    "governor": false,
-                    "smuggler": false,
-                    "assistants": [],
-                    "family_members": [],
-                    "players": []
-                },
-                "mutable": {
-                    "required_count": 5,
-                    "required": {
-                        "Any": 1,
-                        "Jewelry": 1,
-                        "Fabric": 1,
-                        "Spice": 1,
-                        "Fruit": 1
-                    }
-                }
-            },
-            {
-                "name": "Large Market",
-                "location": 14,
-                "roll_location": 10,
-                "general": {
-                    "governor": false,
-                    "smuggler": false,
-                    "assistants": [],
-                    "family_members": [],
-                    "players": []
-                },
-                "immutable": {
-                    "one_cost": 3,
-                    "cost_map": [
-                        3,
-                        7,
-                        12,
-                        18,
-                        25
-                    ]
-                },
-                "mutable": {
-                    "demand": {
-                        "Red": 2,
-                        "Green": 1,
-                        "Yellow": 1,
-                        "Blue": 1
-                    },
-                    "expecting_demand": false
-                }
-            },
-            {
-                "name": "Wainwright",
-                "location": 15,
-                "roll_location": 1,
-                "general": {
-                    "governor": false,
-                    "smuggler": false,
-                    "assistants": [],
-                    "family_members": [],
-                    "players": []
-                },
-                "mutable": {
-                    "extensions": 9
-                }
-            },
-            {
-                "name": "Gemstone Dealer",
-                "location": 16,
-                "roll_location": 16,
-                "general": {
-                    "governor": false,
-                    "smuggler": false,
-                    "assistants": [
-                        "Red"
-                    ],
-                    "family_members": [],
-                    "players": [
-                        "Red"
-                    ]
-                },
-                "mutable": {
-                    "cost": 17
-                }
-            }
-        ],
-        "player_states": [
-            {
-                "color": "Red",
-                "hand": {},
-                "lira": 2,
-                "rubies": 5,
-                "cart_max": 2,
-                "cart_contents": {
-                    "Red": 2,
-                    "Blue": 0,
-                    "Green": 0,
-                    "Yellow": 2
-                },
-                "stack_size": 3,
-                "tiles": [
-                    "Yellow",
-                    "Blue",
-                    "Red",
-                    "Green"
-                ],
-                "location": 16,
-                "assistant_locations": [
-                    16,
-                    12
-                ],
-                "family_location": 6
-            },
-            {
-                "color": "Blue",
-                "hand": {
-                    "OneGood": 1
-                },
-                "lira": 7,
-                "rubies": 0,
-                "cart_max": 2,
-                "cart_contents": {
-                    "Red": 2,
-                    "Blue": 0,
-                    "Green": 2,
-                    "Yellow": 2
-                },
-                "stack_size": 3,
-                "tiles": [],
-                "location": 3,
-                "assistant_locations": [
-                    3
-                ],
-                "family_location": 6
-            },
-            {
-                "color": "Green",
-                "hand": {
-                    "OneGood": 1
-                },
-                "lira": 0,
-                "rubies": 0,
-                "cart_max": 2,
-                "cart_contents": {
-                    "Red": 2,
-                    "Blue": 0,
-                    "Green": 2,
-                    "Yellow": 0
-                },
-                "stack_size": 3,
-                "tiles": [],
-                "location": 3,
-                "assistant_locations": [
-                    3
-                ],
-                "family_location": 6
-            }
-        ]
-    },
-    "derived": {
-        "current_player_idx": 0,
-        "current_player": "Red",
-        "current_player_state": {
-            "color": "Red",
-            "hand": {},
-            "lira": 2,
-            "rubies": 5,
-            "cart_max": 2,
-            "cart_contents": {
-                "Red": 2,
-                "Blue": 0,
-                "Green": 0,
-                "Yellow": 2
-            },
-            "stack_size": 3,
-            "tiles": [
-                "Yellow",
-                "Blue",
-                "Red",
-                "Green"
-            ],
-            "location": 16,
-            "assistant_locations": [
-                16,
-                12
-            ],
-            "family_location": 6
-        },
-        "current_player_location": 16,
-        "current_player_tile": "GEMSTONE_DEALER",
-        "current_player_tile_state": {
-            "governor": false,
-            "smuggler": false,
-            "assistants": [
-                "Red"
-            ],
-            "family_members": [],
-            "players": [
-                "Red"
-            ]
-        },
-        "ranking": {
-            "Red": [
-                5,
-                2,
-                4,
-                0
-            ],
-            "Blue": [
-                0,
-                7,
-                6,
-                1
-            ],
-            "Green": [
-                0,
-                0,
-                4,
-                1
-            ]
+          ],
+          "players": []
         }
+      },
+      {
+        "name": "Fountain",
+        "location": 7,
+        "roll_location": 7,
+        "general": {
+          "governor": false,
+          "smuggler": true,
+          "assistants": [],
+          "family_members": [],
+          "players": []
+        }
+      },
+      {
+        "name": "Spice Warehouse",
+        "location": 8,
+        "roll_location": 3,
+        "general": {
+          "governor": false,
+          "smuggler": false,
+          "assistants": [],
+          "family_members": [],
+          "players": []
+        }
+      },
+      {
+        "name": "Black Market",
+        "location": 9,
+        "roll_location": 8,
+        "general": {
+          "governor": false,
+          "smuggler": false,
+          "assistants": [],
+          "family_members": [],
+          "players": []
+        }
+      },
+      {
+        "name": "Caravansary",
+        "location": 10,
+        "roll_location": 6,
+        "general": {
+          "governor": false,
+          "smuggler": false,
+          "assistants": [],
+          "family_members": [],
+          "players": []
+        },
+        "mutable": {
+          "discard": [
+            "OneGood"
+          ],
+          "awaiting_discard": false
+        }
+      },
+      {
+        "name": "Small Market",
+        "location": 11,
+        "roll_location": 11,
+        "general": {
+          "governor": false,
+          "smuggler": false,
+          "assistants": [],
+          "family_members": [],
+          "players": []
+        },
+        "immutable": {
+          "one_cost": 2,
+          "cost_map": [
+            2,
+            5,
+            9,
+            14,
+            20
+          ]
+        },
+        "mutable": {
+          "demand": {
+            "Red": 2,
+            "Green": 2,
+            "Yellow": 1
+          },
+          "expecting_demand": false
+        }
+      },
+      {
+        "name": "Tea House",
+        "location": 12,
+        "roll_location": 9,
+        "general": {
+          "governor": false,
+          "smuggler": false,
+          "assistants": [
+            "Red"
+          ],
+          "family_members": [],
+          "players": []
+        }
+      },
+      {
+        "name": "Sultan's Palace",
+        "location": 13,
+        "roll_location": 13,
+        "general": {
+          "governor": false,
+          "smuggler": false,
+          "assistants": [],
+          "family_members": [],
+          "players": []
+        },
+        "mutable": {
+          "required_count": 5,
+          "required": {
+            "Any": 1,
+            "Jewelry": 1,
+            "Fabric": 1,
+            "Spice": 1,
+            "Fruit": 1
+          }
+        }
+      },
+      {
+        "name": "Large Market",
+        "location": 14,
+        "roll_location": 10,
+        "general": {
+          "governor": false,
+          "smuggler": false,
+          "assistants": [],
+          "family_members": [],
+          "players": []
+        },
+        "immutable": {
+          "one_cost": 3,
+          "cost_map": [
+            3,
+            7,
+            12,
+            18,
+            25
+          ]
+        },
+        "mutable": {
+          "demand": {
+            "Red": 2,
+            "Green": 1,
+            "Yellow": 1,
+            "Blue": 1
+          },
+          "expecting_demand": false
+        }
+      },
+      {
+        "name": "Wainwright",
+        "location": 15,
+        "roll_location": 1,
+        "general": {
+          "governor": false,
+          "smuggler": false,
+          "assistants": [],
+          "family_members": [],
+          "players": []
+        },
+        "mutable": {
+          "extensions": 9
+        }
+      },
+      {
+        "name": "Gemstone Dealer",
+        "location": 16,
+        "roll_location": 16,
+        "general": {
+          "governor": false,
+          "smuggler": false,
+          "assistants": [
+            "Red"
+          ],
+          "family_members": [],
+          "players": [
+            "Red"
+          ]
+        },
+        "mutable": {
+          "cost": 17
+        }
+      }
+    ],
+    "player_states": [
+      {
+        "color": "Red",
+        "hand": {},
+        "lira": 2,
+        "rubies": 5,
+        "cart_max": 2,
+        "cart_contents": {
+          "Red": 2,
+          "Blue": 0,
+          "Green": 0,
+          "Yellow": 2
+        },
+        "stack_size": 3,
+        "tiles": [
+          "Green",
+          "Red",
+          "Yellow",
+          "Blue"
+        ],
+        "location": 16,
+        "assistant_locations": [
+          12,
+          16
+        ],
+        "family_location": 6
+      },
+      {
+        "color": "Blue",
+        "hand": {
+          "OneGood": 1
+        },
+        "lira": 7,
+        "rubies": 0,
+        "cart_max": 2,
+        "cart_contents": {
+          "Red": 2,
+          "Blue": 0,
+          "Green": 2,
+          "Yellow": 2
+        },
+        "stack_size": 3,
+        "tiles": [],
+        "location": 3,
+        "assistant_locations": [
+          3
+        ],
+        "family_location": 6
+      },
+      {
+        "color": "Green",
+        "hand": {
+          "OneGood": 1
+        },
+        "lira": 0,
+        "rubies": 0,
+        "cart_max": 2,
+        "cart_contents": {
+          "Red": 2,
+          "Blue": 0,
+          "Green": 2,
+          "Yellow": 0
+        },
+        "stack_size": 3,
+        "tiles": [],
+        "location": 3,
+        "assistant_locations": [
+          3
+        ],
+        "family_location": 6
+      }
+    ]
+  },
+  "derived": {
+    "current_player_idx": 0,
+    "current_player": "Red",
+    "current_player_state": {
+      "color": "Red",
+      "hand": {},
+      "lira": 2,
+      "rubies": 5,
+      "cart_max": 2,
+      "cart_contents": {
+        "Red": 2,
+        "Blue": 0,
+        "Green": 0,
+        "Yellow": 2
+      },
+      "stack_size": 3,
+      "tiles": [
+        "Green",
+        "Red",
+        "Yellow",
+        "Blue"
+      ],
+      "location": 16,
+      "assistant_locations": [
+        12,
+        16
+      ],
+      "family_location": 6
+    },
+    "current_player_location": 16,
+    "current_player_tile": "GEMSTONE_DEALER",
+    "current_player_tile_state": {
+      "governor": false,
+      "smuggler": false,
+      "assistants": [
+        "Red"
+      ],
+      "family_members": [],
+      "players": [
+        "Red"
+      ]
+    },
+    "ranking": {
+      "Red": [
+        5,
+        2,
+        4,
+        0
+      ],
+      "Blue": [
+        0,
+        7,
+        6,
+        1
+      ],
+      "Green": [
+        0,
+        0,
+        4,
+        1
+      ]
     }
+  }
 }

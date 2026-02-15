@@ -36,7 +36,7 @@ from .actions import (
     YieldTurn,
 )
 from .constants import ROLL_LOCATIONS, Card, Good, Location, Player, Roll, Tile
-from .lib.utils import ImmutableInvertibleMapping
+from .lib.utils import ImmutableInvertibleMapping, OrderedSet
 from .player import PlayerState
 from .tiles import (
     CaravansaryTileState,
@@ -80,8 +80,8 @@ class GameState:
         }
         self.get_market_state(Tile.SMALL_MARKET).set_demand(small_demand)
         self.get_market_state(Tile.LARGE_MARKET).set_demand(large_demand)
-        self.tile_states[Tile.POLICE_STATION].family_members |= set(self.players)
-        self.tile_states[Tile.FOUNTAIN].players |= set(self.players)
+        self.tile_states[Tile.POLICE_STATION].family_members |= OrderedSet(self.players)
+        self.tile_states[Tile.FOUNTAIN].players |= OrderedSet(self.players)
         self.tile_states[self.location_map[governor_location]].governor = True
         self.tile_states[self.location_map[smuggler_location]].smuggler = True
 
