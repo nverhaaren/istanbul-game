@@ -120,6 +120,7 @@ def good_from_name(name: str) -> Good:
         raise ValueError(f"Unknown good name: {name!r}")
     return result
 
+
 # RedTileAction method serialization
 _METHOD_TO_JSON: dict[str, str] = {
     RedTileAction.TO_FOUR: "to_four",

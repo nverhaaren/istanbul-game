@@ -28,6 +28,9 @@ class OrderedSet(MutableSet[T]):
     def discard(self, value: T) -> None:
         self._data.pop(value, None)
 
+    def clear(self) -> None:
+        self._data.clear()
+
     def __repr__(self) -> str:
         if not self._data:
             return f"{type(self).__name__}()"

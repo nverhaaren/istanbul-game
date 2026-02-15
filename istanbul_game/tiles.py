@@ -1,4 +1,5 @@
 import collections
+import typing
 from collections import Counter
 from typing import NamedTuple
 
@@ -29,7 +30,7 @@ class GenericTileState(TileState):
 
 
 class MosqueTileState(TileState):
-    def __init__(self, goods: set[Good]):
+    def __init__(self, goods: typing.Iterable[Good]):
         super().__init__()
         self.available_tiles: dict[Good, int] = {good: 2 for good in goods}
 
@@ -51,8 +52,8 @@ class PostOfficeTileState(TileState):
         super().__init__()
         self.position: int = 0
 
-    def available(self) -> tuple[set[Good], int]:
-        goods: set[Good] = set()
+    def available(self) -> tuple[OrderedSet[Good], int]:
+        goods: OrderedSet[Good] = OrderedSet()
         lira = 0
         for i, slot in enumerate(self.MAIL_SLOTS):
             # Position > slot index means we've passed it, use "early" values
@@ -64,7 +65,7 @@ class PostOfficeTileState(TileState):
                 lira += slot.lira_late
         return goods, lira
 
-    def take_action(self) -> tuple[set[Good], int]:
+    def take_action(self) -> tuple[OrderedSet[Good], int]:
         goods, lira = self.available()
         self.position = (self.position + 1) % 5
         return goods, lira
@@ -190,9 +191,9 @@ def initial_tile_state(tile: Tile, player_count: int) -> TileState:
         return simple_mapping[tile]()
 
     if tile is Tile.GREAT_MOSQUE:
-        return MosqueTileState({Good.BLUE, Good.YELLOW})
+        return MosqueTileState((Good.BLUE, Good.YELLOW))
     if tile is Tile.SMALL_MOSQUE:
-        return MosqueTileState({Good.RED, Good.GREEN})
+        return MosqueTileState((Good.RED, Good.GREEN))
     if tile is Tile.SMALL_MARKET:
         return MarketTileState(2)
     if tile is Tile.LARGE_MARKET:
