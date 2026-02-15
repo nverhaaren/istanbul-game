@@ -497,7 +497,7 @@ stateDiagram-v2
     Phase1 --> assistant_check : Move / Stay Put
 
     assistant_check --> phase2_check : Place or pick up assistant
-    assistant_check --> YieldPending : Skip assistant (voluntary)
+    assistant_check --> YieldPending : Skip assistant
 
     phase2_check --> Phase3 : Alone at tile or at Fountain
     phase2_check --> Phase2 : Other players present
