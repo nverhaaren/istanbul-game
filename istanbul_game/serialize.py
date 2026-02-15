@@ -1,3 +1,110 @@
+"""Serialize game state to JSON-compatible dicts.
+
+Output Schema
+-------------
+
+``game_state()`` returns a dict with three top-level keys:
+
+**immutable** - fixed game configuration::
+
+    {
+        "players": ["Red", "Blue", "Green"],       # ordered player list (str values)
+        "player_count": 3,                          # number of players (2-5)
+        "victory_threshold": 5,                     # rubies needed to win (5 or 6 for 2-player)
+        "tile_layout": ["GREAT_MOSQUE", ...]        # 16 tile names in board order (Tile enum names)
+    }
+
+**mutable** - state that changes during the game::
+
+    {
+        "turn_state": {
+            "players": ["Red", "Blue", "Green"],    # turn order
+            "current_player_idx": 0,                # index into players
+            "current_player": "Red",                # current player color
+            "current_phase": 1,                     # phase within turn (1-4)
+            "yield_required": false                  # whether turn must end immediately
+        },
+        "outstanding_reward_choices": 0,             # pending family capture rewards
+        "completed": false,                          # whether the game is over
+        "tile_states": [ ... ],                      # 16 tile state objects (see below)
+        "player_states": [ ... ]                     # per-player state objects (see below)
+    }
+
+**derived** - convenience fields computed from mutable state::
+
+    {
+        "current_player_idx": 0,
+        "current_player": "Red",
+        "current_player_state": { ... },             # player_state for current player
+        "current_player_location": 16,
+        "current_player_tile": "GEMSTONE_DEALER",    # Tile enum name
+        "current_player_tile_state": { ... },        # general_tile_state for current tile
+        "ranking": {"Red": [5, 2, 4, 0], ...}       # [rubies, lira, goods_count, cards_count]
+    }
+
+Player State
+~~~~~~~~~~~~
+
+::
+
+    {
+        "color": "Red",                              # player color (title-cased)
+        "hand": {"OneGood": 1, "FiveLira": 2},      # card name -> count (zero counts omitted)
+        "lira": 7,
+        "rubies": 2,
+        "cart_max": 3,                               # maximum goods capacity (2-5)
+        "cart_contents": {"Red": 2, "Blue": 0, ...}, # good color (title-cased) -> count
+        "stack_size": 3,                             # assistants available to place
+        "tiles": ["Red", "Green"],                   # mosque tiles acquired (title-cased good names)
+        "location": 8,                               # board location (1-16)
+        "assistant_locations": [3, 7],               # locations with player's assistants
+        "family_location": 6                         # location of family member
+    }
+
+Tile State
+~~~~~~~~~~
+
+Every tile has ``name`` (Tile.value), ``location`` (1-16), ``roll_location`` (1-16),
+and ``general`` with occupant info::
+
+    {
+        "name": "Great Mosque",
+        "location": 1,
+        "roll_location": 15,
+        "general": {
+            "governor": false,
+            "smuggler": false,
+            "assistants": ["Red"],                   # player colors (title-cased)
+            "family_members": ["Blue"],
+            "players": ["Red"]
+        }
+    }
+
+Tiles with additional state have ``mutable`` (and optionally ``immutable``) keys.
+Generic tiles (warehouses, fountain, police station, black market, tea house) have
+no extra keys beyond ``general``.
+
+- **Mosque**: ``{"mutable": {"Yellow": 3, "Blue": 3}}`` (available tiles by good color)
+- **Post Office**: ``{"mutable": {"position": 0, "available": {"goods": ["Red"], "lira": 3}}}``
+- **Caravansary**: ``{"mutable": {"discard": ["OneGood", ...], "awaiting_discard": false}}``
+- **Wainwright**: ``{"mutable": {"extensions": 9}}``
+- **Market**: ``{"immutable": {"one_cost": 2, "cost_map": [2, 5, 9, 14, 20]},
+  "mutable": {"demand": {"Red": 2, ...}, "expecting_demand": false}}``
+- **Sultan's Palace**: ``{"mutable": {"required_count": 5,
+  "required": {"Jewelry": 1, "Fabric": 1, "Any": 0, ...}}}``
+  (``null`` when no more rubies available)
+- **Gemstone Dealer**: ``{"mutable": {"cost": 17}}`` (``null`` when sold out)
+
+Card Names
+~~~~~~~~~~
+
+Cards are serialized as: ``OneGood``, ``FiveLira``, ``ExtraMove``, ``NoMove``,
+``ReturnAssistant``, ``ArrestFamily``, ``SellAny``, ``2xSultansPalace``,
+``2xPostOffice``, ``2xGemstoneDealer``.
+
+See ``examples/red_wins_3p/expected_output.json`` for a complete example.
+"""
+
 import typing
 
 from .constants import ROLL_LOCATIONS, Card, Good, Location, Tile
