@@ -24,19 +24,19 @@ The 16 tiles are:
 | Tile | Category |
 |---|---|
 | Great Mosque | Mosque |
-| Small Mosque | Mosque |
 | Post Office | Production |
 | Fabric Warehouse | Warehouse |
-| Spice Warehouse | Warehouse |
+| Small Mosque | Mosque |
 | Fruit Warehouse | Warehouse |
-| Fountain | Special |
 | Police Station | Special |
+| Fountain | Special |
+| Spice Warehouse | Warehouse |
 | Black Market | Dice |
-| Tea House | Dice |
 | Caravansary | Cards |
 | Small Market | Market |
-| Large Market | Market |
+| Tea House | Dice |
 | Sultan's Palace | Trade |
+| Large Market | Market |
 | Wainwright | Upgrade |
 | Gemstone Dealer | Rubies |
 
@@ -80,10 +80,11 @@ When a card is played, it is placed on the Caravansary's discard pile.
 
 Rubies are the primary victory objective. There are five sources of rubies:
 
-1. **Mosques** (2 rubies total): Completing a mosque tile pair (see Mosque tiles)
-2. **Sultan's Palace**: Trading goods for rubies (see Sultan's Palace)
-3. **Wainwright**: Expanding your cart to maximum capacity (see Wainwright)
-4. **Gemstone Dealer**: Buying rubies with lira (see Gemstone Dealer)
+1. **Great Mosque pair** (1 ruby): Completing the Blue + Yellow mosque tile pair (see Mosque tiles)
+2. **Small Mosque pair** (1 ruby): Completing the Red + Green mosque tile pair (see Mosque tiles)
+3. **Sultan's Palace**: Trading goods for rubies (see Sultan's Palace)
+4. **Wainwright**: Expanding your cart to maximum capacity (see Wainwright)
+5. **Gemstone Dealer**: Buying rubies with lira (see Gemstone Dealer)
 
 ### Player Pieces
 
@@ -114,7 +115,7 @@ Each player has:
 
 The game does not end immediately when a player reaches the ruby threshold. Instead, the current round is completed so that all players have taken the same number of turns. Specifically, the game ends when the **last player in turn order** yields their turn and at least one player has reached the ruby threshold.
 
-**Tiebreaker**: If multiple players reach the threshold in the same round, the winner is determined by (in order): most rubies, most lira, most total goods in cart, most cards in hand.
+**Tiebreaker**: If multiple players reach the threshold in the same round, they are ranked by (in order): most rubies, most lira, most total goods in cart, most cards in hand. If players are still tied after all four criteria, they share the victory.
 
 ## Turn Structure
 

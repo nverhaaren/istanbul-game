@@ -688,6 +688,24 @@ class TestVictoryConditions:
         assert players_ranked[0] == Player.BLUE
         assert players_ranked[1] == Player.RED
 
+    def test_ranking_full_tie_multiple_winners(self) -> None:
+        """Players tied on all criteria share the same rank (multiple winners)."""
+        game = create_game()
+        game.player_states[Player.RED].rubies = 5
+        game.player_states[Player.BLUE].rubies = 5
+        game.player_states[Player.RED].lira = 10
+        game.player_states[Player.BLUE].lira = 10
+        game.player_states[Player.RED].cart_contents = Counter({Good.RED: 1})
+        game.player_states[Player.BLUE].cart_contents = Counter({Good.RED: 1})
+        game.player_states[Player.RED].hand = Counter({Card.ONE_GOOD: 1})
+        game.player_states[Player.BLUE].hand = Counter({Card.ONE_GOOD: 1})
+
+        ranking = game.ranking()
+        scores = list(ranking.values())
+
+        # Both players should have identical scores — they are co-winners
+        assert scores[0] == scores[1]
+
 
 class TestSpecialNPCs:
     """Tests for governor and smuggler encounters."""
