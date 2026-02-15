@@ -13,6 +13,7 @@ from istanbul_game.actions import (
     ExtraMoveCardAction,
     FiveLiraCardAction,
     GenericTileAction,
+    GreenTileAction,
     MarketAction,
     Move,
     NoMoveCardAction,
@@ -138,6 +139,26 @@ class TestTurnStateValidAction:
         state.current_phase = 3
         action = DoubleCardAction(Card.DOUBLE_PO, (GenericTileAction(), GenericTileAction()))
         assert state.valid_action(action) is True
+
+    def test_green_tile_valid_in_phase_3(self) -> None:
+        """Green tile action is valid in phase 3."""
+        state = TurnState((Player.RED, Player.BLUE))
+        state.current_phase = 3
+        action = GreenTileAction(Good.BLUE)
+        assert state.valid_action(action) is True
+
+    def test_green_tile_invalid_in_phase_1(self) -> None:
+        """Green tile action is invalid in phase 1."""
+        state = TurnState((Player.RED, Player.BLUE))
+        action = GreenTileAction(Good.BLUE)
+        assert state.valid_action(action) is False
+
+    def test_green_tile_invalid_in_phase_4(self) -> None:
+        """Green tile action is invalid in phase 4."""
+        state = TurnState((Player.RED, Player.BLUE))
+        state.current_phase = 4
+        action = GreenTileAction(Good.BLUE)
+        assert state.valid_action(action) is False
 
 
 class TestTurnStateYieldRequired:
@@ -554,6 +575,36 @@ class TestFamilyMemberCapture:
         # Blue's family should be back at police station
         police_loc = game.location_map.inverse[Tile.POLICE_STATION]
         assert blue_player.family_location == police_loc
+
+    def test_capture_occurs_in_phase_4(self) -> None:
+        """Family member captures happen after tile action transitions turn to Phase 4."""
+        from tests.helpers import create_game, move_player_to_tile
+
+        game = create_game()
+        red_player = game.player_states[Player.RED]
+        blue_player = game.player_states[Player.BLUE]
+
+        # Place blue's family member at target tile
+        target_loc = Location(5)
+        target_tile = game.location_map[target_loc]
+        blue_player.family_location = target_loc
+        game.tile_states[target_tile].family_members.add(Player.BLUE)
+
+        # Red moves to target
+        red_player.hand[Card.NO_MOVE] = 1
+        move_player_to_tile(game, Player.RED, target_tile)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        # Perform tile action — capture happens during this action
+        game.take_action(GenericTileAction())
+
+        # Turn state should be in phase 4 when reward choices are outstanding
+        assert game.turn_state.current_phase == 4
+        assert game.outstanding_reward_choices == 1
+
+        # Choosing reward is valid in phase 4
+        game.take_action(ChooseReward(ChooseReward.LIRA))
+        assert game.turn_state.current_phase == 4
 
     def test_capture_multiple_family_members(self) -> None:
         """Can capture multiple family members at once."""

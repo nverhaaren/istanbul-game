@@ -57,7 +57,7 @@ class TurnState:
             return self.current_phase == 1
         if isinstance(action, Pay):
             return self.current_phase == 2
-        if isinstance(action, (PlaceTileAction, SkipTileAction, DoubleCardAction, SellAnyCardAction)):
+        if isinstance(action, (PlaceTileAction, SkipTileAction, DoubleCardAction, SellAnyCardAction, GreenTileAction)):
             return self.current_phase == 3
         if isinstance(action, (ChooseReward, EncounterGovernor, EncounterSmuggler)):
             return self.current_phase == 4

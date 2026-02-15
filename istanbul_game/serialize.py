@@ -72,7 +72,7 @@ def game_state(gs: GameState) -> dict:
             "current_player_location": gs.current_player_location,
             "current_player_tile": gs.current_player_tile.name,
             "current_player_tile_state": general_tile_state(gs.current_player_tile_state),
-            "ranking": {p.value: score[:4] for p, score in gs.ranking().items()},
+            "ranking": {p.value: list(score) for p, score in gs.ranking().items()},
         },
     }
 

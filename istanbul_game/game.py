@@ -186,13 +186,13 @@ class GameState:
             return True
         return False
 
-    def ranking(self) -> dict[Player, list[int]]:
-        scores = [
-            (p.rubies, p.lira, sum(p.cart_contents.values()), sum(p.hand.values()), i)
-            for i in range(self.player_count)
-            if (p := self.player_states[self.players[i]]) is p
-        ]
-        return {self.players[i]: list(score) for *score, i in sorted(scores, reverse=True)}
+    def ranking(self) -> dict[Player, tuple[int, ...]]:
+        scores: dict[Player, tuple[int, ...]] = {}
+        for player in self.players:
+            p = self.player_states[player]
+            scores[player] = (p.rubies, p.lira, sum(p.cart_contents.values()), sum(p.hand.values()))
+        # Sort by score descending; players with identical scores are tied (multiple winners possible)
+        return dict(sorted(scores.items(), key=lambda item: item[1], reverse=True))
 
     def _move_to(self, location: Location) -> None:
         player = self.turn_state.current_player
@@ -635,7 +635,7 @@ class GameState:
         player = self.turn_state.current_player
         player_state = self.player_states[player]
 
-        assert player_state.cart_max <= 5, f"No room for additional extensions for {player}"
+        assert player_state.cart_max < 5, f"No room for additional extensions for {player}"
         self._spend(7)
         self.wainwright_state.take_action()
         player_state.cart_max += 1

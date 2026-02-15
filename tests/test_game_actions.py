@@ -528,6 +528,20 @@ class TestWainwrightAction:
         assert player_state.cart_max == 5
         assert player_state.rubies == initial_rubies + 1
 
+    def test_cannot_upgrade_past_max_cart(self) -> None:
+        """Cannot upgrade cart beyond maximum capacity of 5."""
+        game = create_game()
+        player_state = game.player_states[Player.RED]
+        player_state.lira = 10
+        player_state.cart_max = 5  # Already at max
+        player_state.hand[Card.NO_MOVE] = 1
+
+        move_player_to_tile(game, Player.RED, Tile.WAINWRIGHT)
+        game.take_action(NoMoveCardAction(skip_assistant=False))
+
+        with pytest.raises(AssertionError, match="No room for additional extensions"):
+            game.take_action(GenericTileAction())
+
 
 class TestPostOfficeAction:
     """Tests for post office tile actions."""
