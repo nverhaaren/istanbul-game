@@ -1,9 +1,53 @@
 import typing
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Iterator, Mapping, MutableMapping, MutableSet
 from typing import Optional
 
 KT = typing.TypeVar("KT")
 VT = typing.TypeVar("VT")
+T = typing.TypeVar("T")
+
+
+class OrderedSet(MutableSet[T]):
+    """A set that preserves insertion order, backed by a dict."""
+
+    def __init__(self, iterable: typing.Iterable[T] = ()) -> None:
+        self._data: dict[T, None] = dict.fromkeys(iterable)
+
+    def __contains__(self, x: object) -> bool:
+        return x in self._data
+
+    def __iter__(self) -> Iterator[T]:
+        return iter(self._data)
+
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def add(self, value: T) -> None:
+        self._data[value] = None
+
+    def discard(self, value: T) -> None:
+        self._data.pop(value, None)
+
+    def clear(self) -> None:
+        self._data.clear()
+
+    def __repr__(self) -> str:
+        if not self._data:
+            return f"{type(self).__name__}()"
+        return f"{type(self).__name__}({list(self._data)})"
+
+    def __ior__(self, other: typing.AbstractSet[T]) -> "OrderedSet[T]":  # type: ignore[override, misc]
+        for item in other:
+            self._data[item] = None
+        return self
+
+    def __isub__(self, other: typing.AbstractSet[T]) -> "OrderedSet[T]":
+        for item in other:
+            self._data.pop(item, None)
+        return self
+
+    def __sub__(self, other: typing.AbstractSet[T]) -> "OrderedSet[T]":
+        return OrderedSet(item for item in self if item not in other)
 
 
 class ImmutableMapping(Mapping[KT, VT]):

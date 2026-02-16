@@ -1,9 +1,9 @@
-"""Tests for lib/utils.py - ImmutableInvertibleMapping."""
+"""Tests for lib/utils.py - ImmutableInvertibleMapping and OrderedSet."""
 
 import pytest
 
 from istanbul_game.constants import Location, Tile
-from istanbul_game.lib.utils import ImmutableInvertibleMapping
+from istanbul_game.lib.utils import ImmutableInvertibleMapping, OrderedSet
 
 
 class TestImmutableInvertibleMapping:
@@ -122,3 +122,124 @@ class TestImmutableInvertibleMapping:
         # ImmutableInvertibleMapping requires values to be unique for inverse
         with pytest.raises(TypeError, match="not injective"):
             ImmutableInvertibleMapping({1: "a", 2: "a"})
+
+
+class TestOrderedSet:
+    """Tests for OrderedSet class."""
+
+    def test_empty(self) -> None:
+        s: OrderedSet[int] = OrderedSet()
+        assert len(s) == 0
+        assert list(s) == []
+
+    def test_from_iterable(self) -> None:
+        s = OrderedSet([3, 1, 2])
+        assert list(s) == [3, 1, 2]
+
+    def test_preserves_insertion_order(self) -> None:
+        s: OrderedSet[str] = OrderedSet()
+        s.add("c")
+        s.add("a")
+        s.add("b")
+        assert list(s) == ["c", "a", "b"]
+
+    def test_deduplicates(self) -> None:
+        s = OrderedSet([1, 2, 3, 2, 1])
+        assert list(s) == [1, 2, 3]
+
+    def test_add_existing_preserves_order(self) -> None:
+        s = OrderedSet([1, 2, 3])
+        s.add(1)
+        assert list(s) == [1, 2, 3]
+
+    def test_contains(self) -> None:
+        s = OrderedSet([1, 2, 3])
+        assert 1 in s
+        assert 4 not in s
+
+    def test_len(self) -> None:
+        s = OrderedSet([1, 2, 3])
+        assert len(s) == 3
+
+    def test_discard_existing(self) -> None:
+        s = OrderedSet([1, 2, 3])
+        s.discard(2)
+        assert list(s) == [1, 3]
+
+    def test_discard_missing(self) -> None:
+        s = OrderedSet([1, 2])
+        s.discard(99)
+        assert list(s) == [1, 2]
+
+    def test_remove_existing(self) -> None:
+        s = OrderedSet([1, 2, 3])
+        s.remove(2)
+        assert list(s) == [1, 3]
+
+    def test_remove_missing_raises(self) -> None:
+        s = OrderedSet([1, 2])
+        with pytest.raises(KeyError):
+            s.remove(99)
+
+    def test_clear(self) -> None:
+        s = OrderedSet([1, 2, 3])
+        s.clear()
+        assert len(s) == 0
+        assert list(s) == []
+
+    def test_clear_then_add(self) -> None:
+        s = OrderedSet([1, 2, 3])
+        s.clear()
+        s.add(5)
+        s.add(4)
+        assert list(s) == [5, 4]
+
+    def test_ior(self) -> None:
+        s = OrderedSet([1, 2])
+        s |= {3, 2}
+        assert 3 in s
+        assert list(s)[:2] == [1, 2]
+
+    def test_isub(self) -> None:
+        s = OrderedSet([1, 2, 3, 4])
+        s -= {2, 4}
+        assert list(s) == [1, 3]
+
+    def test_sub(self) -> None:
+        s = OrderedSet([1, 2, 3, 4])
+        result = s - {2, 4}
+        assert list(result) == [1, 3]
+        assert list(s) == [1, 2, 3, 4]  # original unchanged
+
+    def test_repr_empty(self) -> None:
+        s: OrderedSet[int] = OrderedSet()
+        assert repr(s) == "OrderedSet()"
+
+    def test_repr_nonempty(self) -> None:
+        s = OrderedSet([3, 1, 2])
+        assert repr(s) == "OrderedSet([3, 1, 2])"
+
+    def test_equality_with_set(self) -> None:
+        s = OrderedSet([1, 2, 3])
+        assert s == {1, 2, 3}
+
+    def test_iteration_is_deterministic(self) -> None:
+        """Multiple iterations produce the same order."""
+        s = OrderedSet([5, 3, 1, 4, 2])
+        assert list(s) == list(s) == [5, 3, 1, 4, 2]
+
+    def test_with_enum_types(self) -> None:
+        """Works with Location and Tile enum types used in the game."""
+        locs: OrderedSet[Location] = OrderedSet()
+        locs.add(Location(5))
+        locs.add(Location(3))
+        locs.add(Location(8))
+        assert list(locs) == [Location(5), Location(3), Location(8)]
+        locs.discard(Location(3))
+        assert list(locs) == [Location(5), Location(8)]
+
+        tiles = OrderedSet([Tile.FOUNTAIN, Tile.POST_OFFICE, Tile.CARAVANSARY])
+        assert Tile.FOUNTAIN in tiles
+        assert Tile.TEA_HOUSE not in tiles
+        tiles.add(Tile.FOUNTAIN)
+        assert list(tiles) == [Tile.FOUNTAIN, Tile.POST_OFFICE, Tile.CARAVANSARY]

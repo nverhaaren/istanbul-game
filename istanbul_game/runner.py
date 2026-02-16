@@ -1,6 +1,7 @@
 import logging
 import typing
 
+from . import serialize
 from .actions import PlayerAction
 from .game import GameState
 from .load.phases import PhaseLoader, TurnRow
@@ -28,6 +29,24 @@ class Runner:
         for action in actions:
             self.game_state.take_action(action)
             yield self.game_state
+
+    def run_with_trace(self) -> list[dict[str, object]]:
+        """Run the game and return serialized game state after each turn.
+
+        Returns a list of serialized game states: the initial state followed by
+        the state after each turn completes.
+        """
+        trace = [serialize.game_state(self.game_state)]
+        for idx, turn in enumerate(self.turn_source):
+            actions = self.phase_loader.load_turn(turn)
+            for action in actions:
+                try:
+                    self.game_state.take_action(action)
+                except Exception:
+                    logging.error(f"Got exception at turn {idx}, action {action}")
+                    raise
+            trace.append(serialize.game_state(self.game_state))
+        return trace
 
     def game_state_series(self) -> typing.Iterator[typing.Iterator[GameState]]:
         yield iter([self.game_state])

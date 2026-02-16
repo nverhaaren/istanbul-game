@@ -1,5 +1,6 @@
 """Tests for tile state classes."""
 
+import collections.abc
 from collections import Counter
 
 import pytest
@@ -126,7 +127,7 @@ class TestPostOfficeTileState:
         """Take action returns set of goods and lira amount."""
         state = PostOfficeTileState()
         goods, lira = state.take_action()
-        assert isinstance(goods, set)
+        assert isinstance(goods, collections.abc.Set)
         assert isinstance(lira, int)
         assert len(goods) == 2
         assert lira >= 0
