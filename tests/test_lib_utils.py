@@ -230,8 +230,16 @@ class TestOrderedSet:
 
     def test_with_enum_types(self) -> None:
         """Works with Location and Tile enum types used in the game."""
-        s: OrderedSet[Location] = OrderedSet()
-        s.add(Location(5))
-        s.add(Location(3))
-        s.add(Location(8))
-        assert list(s) == [Location(5), Location(3), Location(8)]
+        locs: OrderedSet[Location] = OrderedSet()
+        locs.add(Location(5))
+        locs.add(Location(3))
+        locs.add(Location(8))
+        assert list(locs) == [Location(5), Location(3), Location(8)]
+        locs.discard(Location(3))
+        assert list(locs) == [Location(5), Location(8)]
+
+        tiles = OrderedSet([Tile.FOUNTAIN, Tile.POST_OFFICE, Tile.CARAVANSARY])
+        assert Tile.FOUNTAIN in tiles
+        assert Tile.TEA_HOUSE not in tiles
+        tiles.add(Tile.FOUNTAIN)
+        assert list(tiles) == [Tile.FOUNTAIN, Tile.POST_OFFICE, Tile.CARAVANSARY]
